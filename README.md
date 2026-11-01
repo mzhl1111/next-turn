@@ -35,6 +35,22 @@ npm run typecheck
 
 No paid model or API key is required for the controlled-agent tests.
 
+### OpenRouter model smoke test
+
+The model client defaults to `z-ai/glm-5.3-flash`, streams responses, and
+records prompt, completion, reasoning-token, total-token, and cost metadata
+when OpenRouter returns it. Keep the token in the environment or an ignored
+`.env` file:
+
+```sh
+cp .env.example .env
+# Edit .env and set OPENROUTER_API_KEY without committing it.
+npm run smoke:openrouter
+```
+
+The smoke command caps output at 128 completion tokens. Normal unit tests use a
+fake stream and never make network requests.
+
 ### Pinned tau-bench environment
 
 The upstream text runtime requires Python 3.12 or 3.13. With Homebrew's

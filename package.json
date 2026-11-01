@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "setup:tau2": "bash scripts/setup_tau2.sh",
+    "smoke:openrouter": "node --env-file-if-exists=.env --import tsx scripts/smoke_openrouter.ts",
     "test": "node --import tsx --test 'test/**/*.test.ts'",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "validate:tau2": "bash scripts/validate_tau2_task_1.sh"
@@ -17,5 +18,8 @@
     "@types/node": "^22.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@openrouter/sdk": "^1.5.33"
   }
 }
