@@ -47,6 +47,11 @@ export interface ToolEvent {
   readonly result?: unknown;
 }
 
+export interface RecordedToolEvent extends ToolEvent {
+  readonly sequence: number;
+  readonly assistantTurn: number;
+}
+
 export interface AgentInput {
   readonly messages: readonly VisibleMessage[];
 }
@@ -87,8 +92,7 @@ export interface RunRecord {
   readonly agent: string;
   readonly messages: readonly VisibleMessage[];
   readonly simulatorDecisions: readonly RecordedSimulatorDecision[];
-  readonly toolEvents: readonly ToolEvent[];
+  readonly toolEvents: readonly RecordedToolEvent[];
   readonly stopReason: RunStopReason;
   readonly error?: RunError;
 }
-

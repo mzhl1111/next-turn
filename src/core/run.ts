@@ -2,8 +2,8 @@ import type {
   RunError,
   RunRecord,
   RunStopReason,
+  RecordedToolEvent,
   TargetAgent,
-  ToolEvent,
   UserScenario,
   UserSimulator,
   VisibleMessage,
@@ -24,7 +24,7 @@ export async function runConversation(options: RunOptions): Promise<RunRecord> {
   const { scenario, simulator, agent } = options;
   const messages: VisibleMessage[] = [];
   const simulatorDecisions: RecordedSimulatorDecision[] = [];
-  const toolEvents: ToolEvent[] = [];
+  const toolEvents: RecordedToolEvent[] = [];
   let stopReason: RunStopReason = "max_user_turns";
   let error: RunError | undefined;
 
@@ -73,7 +73,13 @@ export async function runConversation(options: RunOptions): Promise<RunRecord> {
       content: response.content,
       turn: userTurn,
     });
-    toolEvents.push(...response.toolEvents);
+    for (const event of response.toolEvents) {
+      toolEvents.push({
+        ...event,
+        sequence: toolEvents.length + 1,
+        assistantTurn: userTurn,
+      });
+    }
   }
 
   const base = {
@@ -88,4 +94,3 @@ export async function runConversation(options: RunOptions): Promise<RunRecord> {
 
   return error === undefined ? base : { ...base, error };
 }
-
