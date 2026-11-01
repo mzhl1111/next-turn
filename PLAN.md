@@ -1,6 +1,6 @@
 # Dynamic User Testing: Side Project MVP Plan
 
-Date: 2026-11-01. Status: Weekend 1 implementation in progress; the controlled harness and upstream tool/evaluator validation are complete.
+Date: 2026-11-01. Status: Weekend 1 implementation in progress; the controlled harness, upstream tool/evaluator validation, and first real-model trial are complete.
 
 ## Goals and boundaries
 
@@ -102,7 +102,7 @@ Distinguish two meanings of “reproduction”: trajectory replay shows what hap
 ### Weekend 1: close the loop on the public task
 
 - [x] Create an independent project and source manifest, and pin the upstream version and hashes.
-- [ ] Run the original task and verify tool-write semantics and evaluator results.
+- [x] Run the original task and verify tool-write semantics and evaluator results.
 - [ ] Establish isolated sessions, environment reset, and message and tool-event recording.
 - [x] Implement the API loop for both a fixed-input baseline and a dynamic user.
 - Deliverable: two inspectable trajectories for the same public task with assertions against real state.

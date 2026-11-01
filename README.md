@@ -51,6 +51,17 @@ npm run smoke:openrouter
 The smoke command caps output at 128 completion tokens. Normal unit tests use a
 fake stream and never make network requests.
 
+After completing the pinned tau2 setup, run one bounded real-model benchmark:
+
+```sh
+npm run run:tau2:openrouter
+```
+
+This runs only retail task `"1"` with one trial, one concurrent worker, no
+automatic retries, a 24-step limit, and a 180-second timeout. The result summary
+uses OpenRouter's raw per-response cost because tau2's pinned LiteLLM price map
+does not yet recognize this model.
+
 ### Pinned tau-bench environment
 
 The upstream text runtime requires Python 3.12 or 3.13. With Homebrew's

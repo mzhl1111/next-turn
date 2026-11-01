@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "run:tau2:openrouter": "bash scripts/run_tau2_openrouter.sh",
     "setup:tau2": "bash scripts/setup_tau2.sh",
     "smoke:openrouter": "node --env-file-if-exists=.env --import tsx scripts/smoke_openrouter.ts",
     "test": "node --import tsx --test 'test/**/*.test.ts'",
