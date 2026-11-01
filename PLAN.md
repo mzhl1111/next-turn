@@ -1,136 +1,137 @@
-# 动态用户测试：Side Project MVP 计划
+# Dynamic User Testing: Side Project MVP Plan
 
-日期：2026-11-01。状态：选题与计划完成，尚未实现或运行实验。
+Date: 2026-11-01. Status: topic selection and planning complete; implementation and experiments have not yet started.
 
-## 目标与边界
+## Goals and boundaries
 
-做一个能接入 Playwright 的动态用户测试组件：开发者声明用户目标和约束，组件根据实际回复生成下一轮输入，最终由独立断言判断任务是否完成。
+Build a dynamic user-testing component that integrates with Playwright: developers declare a user goal and constraints, the component generates the next input based on the actual response, and independent assertions ultimately determine whether the task was completed.
 
-仅使用公开 benchmark、从零编写的 demo 和测试代码。公司 golden probes、代码、prompt、日志、内部业务规则与账号均不作为输入。项目放在独立目录，未来可拆成个人仓库。
+Use only public benchmarks plus demo and test code written from scratch. Company golden probes, code, prompts, logs, internal business rules, and accounts must not be used as inputs. Keep the project in a separate directory so it can later become a personal repository.
 
-核心假设：相比固定多轮输入，受约束的动态用户可以适应合理的对话路径变化，同时暴露真正的业务错误，并提供足够证据让开发者诊断。
+Core hypothesis: compared with fixed multi-turn inputs, a constrained dynamic user can adapt to reasonable changes in the conversation path while still exposing genuine business errors and providing enough evidence for developers to diagnose them.
 
-τ-bench 已经有动态用户模拟。因此本项目不是验证“LLM 能扮演用户”，而是验证“场景约束 + Playwright 接入 + 独立断言 + 失败证据”能否形成好用的小工具。
+tau-bench already includes dynamic user simulation. This project therefore does not attempt to prove that “an LLM can play a user.” It tests whether “scenario constraints + Playwright integration + independent assertions + failure evidence” can form a useful small tool.
 
-## 第一题：τ-bench retail task 1
+## First task: tau-bench retail task 1
 
-- 仓库：<https://github.com/sierra-research/tau2-bench>
-- 固定版本：`v1.0.1`，domain=`retail`，task id=`"1"`。实施时记录 tag 对应 commit SHA 和数据哈希，不跟随 main 自动更新。
-- 题目来源：[tasks.json](https://github.com/sierra-research/tau2-bench/blob/v1.0.1/data/tau2/domains/retail/tasks.json)
-- 业务规则：[policy.md](https://github.com/sierra-research/tau2-bench/blob/v1.0.1/data/tau2/domains/retail/policy.md)
-- 许可：[MIT，Copyright 2025 Sierra Research](https://github.com/sierra-research/tau2-bench/blob/v1.0.1/LICENSE)。引入上游代码、数据时保留原许可与来源说明。
-- 运行依赖：该版本要求 Python >=3.12、<3.14；先只装文本运行所需依赖，不装 voice 扩展。[依赖声明](https://github.com/sierra-research/tau2-bench/blob/v1.0.1/pyproject.toml)
+- Repository: <https://github.com/sierra-research/tau2-bench>
+- Pinned version: `v1.0.1`, domain=`retail`, task ID=`"1"`. Record the tag's commit SHA and data hashes during implementation; do not automatically follow `main`.
+- Task source: [tasks.json](https://github.com/sierra-research/tau2-bench/blob/v1.0.1/data/tau2/domains/retail/tasks.json)
+- Business rules: [policy.md](https://github.com/sierra-research/tau2-bench/blob/v1.0.1/data/tau2/domains/retail/policy.md)
+- License: [MIT, Copyright 2025 Sierra Research](https://github.com/sierra-research/tau2-bench/blob/v1.0.1/LICENSE). Preserve the original license and source attribution when importing upstream code or data.
+- Runtime dependencies: this version requires Python >=3.12,<3.14. Initially install only the dependencies required for text-based execution, without voice extras. [Dependency declaration](https://github.com/sierra-research/tau2-bench/blob/v1.0.1/pyproject.toml)
 
-原题简述：用户希望更换键盘和温控器。键盘必须满足指定开关、背光和尺寸要求；没有符合条件的键盘就只换温控器。用户记得姓名和邮编，不记得邮箱。原题预期仅发起温控器换货。
+Original task summary: the user wants to exchange a keyboard and a thermostat. The keyboard must satisfy specified switch, backlight, and size requirements; if no matching keyboard exists, only the thermostat should be exchanged. The user remembers their name and ZIP code but not their email address. The original task expects only a thermostat exchange to be initiated.
 
-选择理由：它同时包含身份信息追问、条件偏好和部分完成，最终状态明确，且不需要真实第三方服务。第一版先保持用户目标稳定，不加复杂的中途改主意。
+Why this task was chosen: it combines follow-up identity questions, conditional preferences, and partial completion; it has a clear final state and does not require a real third-party service. Keep the user's goal stable in the first version rather than adding complicated mid-conversation changes of mind.
 
-这里的“完成”是模拟系统正确记录换货请求，不是实际商品已经送达。验收以该版本工具和 evaluator 的实际语义为准。
+Here, “completion” means the simulated system correctly records the exchange request, not that the replacement product has actually arrived. Acceptance follows the actual semantics of the tools and evaluator in this pinned version.
 
-## 实验设计
+## Experiment design
 
-先让原题在上游环境中跑通，确认数据库、工具及 evaluator 的行为。保留上游 simulator 作为参考；自定义策略和 UI 包装后的结果标为派生实验，不宣称可与官方排行榜直接比较。
+First run the original task successfully in the upstream environment to confirm the database, tools, and evaluator behavior. Keep the upstream simulator as a reference. Label results from the custom policy and UI wrapper as derived experiments, and do not claim they are directly comparable with the official leaderboard.
 
-两种主要测试输入：
+Two primary test inputs:
 
-1. 固定回放：从公开 demo 的一次成功对话提取用户输入序列，之后按轮次回放。
-2. 动态用户：保持同一目标与事实，根据当前可见对话生成输入。
+1. Fixed replay: extract the sequence of user inputs from one successful conversation in the public demo, then replay them turn by turn.
+2. Dynamic user: preserve the same goal and facts while generating input from the currently visible conversation.
 
-所有实验使用相同初始数据库、业务规则、成功断言与目标 agent 配置；每次运行重置环境。固定回放能适应的变体也保留，不为制造优势刻意挑选脚本。
+All experiments use the same initial database, business rules, success assertions, and target-agent configuration, and the environment is reset before every run. Preserve variants that fixed replay can also handle; do not deliberately select scripts merely to manufacture an advantage.
 
-派生测试矩阵：
+Derived test matrix:
 
-| 类型 | Agent 行为 | 预期 |
+| Type | Agent behavior | Expected result |
 | --- | --- | --- |
-| 正常控制 | 常规澄清并完成 | 两种输入均应通过 |
-| 合理变化 A | 改变询问身份与偏好的顺序，仍遵守认证规则 | 动态用户正确作答，业务应通过 |
-| 合理变化 B | 拆分或合并澄清问题 | 动态用户保持信息一致，业务应通过 |
-| 错误 A | 将不满足约束的键盘加入换货 | 用户应拒绝；若实际执行则业务判失败 |
-| 错误 B | 声称已提交，但没有写入状态 | 结果断言失败 |
-| 错误 C | 尚未得到明确确认就执行写操作 | 时序断言失败，即使最终状态看似正确 |
+| Normal control | Perform ordinary clarification and complete the task | Both input types should pass |
+| Reasonable variation A | Change the order of identity and preference questions while still following authentication rules | The dynamic user should answer correctly and the business task should pass |
+| Reasonable variation B | Split or combine clarification questions | The dynamic user should remain consistent and the business task should pass |
+| Error A | Add a keyboard that does not satisfy the constraints to the exchange | The user should reject it; if it is actually submitted, the business assertion should fail |
+| Error B | Claim the request was submitted without writing any state | The result assertion should fail |
+| Error C | Perform a write before receiving explicit confirmation | The sequencing assertion should fail even if the final state appears correct |
 
-先用可控的 agent 替身验证测试组件本身，再用真实 LLM agent 跑同一题。人为注入的错误只算检测能力验证，不能称为发现真实模型的新 bug。
+First use a controllable agent substitute to validate the test component itself, then run the same task with a real LLM agent. Artificially injected errors demonstrate detection capability only; they must not be described as newly discovered bugs in a real model.
 
-## MVP 结构
+## MVP structure
 
-建议采用 TypeScript + Playwright 作为组件和浏览器层，Python 保留上游环境与工具，避免重写业务规则。第一版提供一个极简本地聊天页面，连接同一个目标 agent；无需完整电商 UI。
+Use TypeScript + Playwright for the component and browser layers, while retaining the upstream Python environment and tools to avoid reimplementing business rules. The first version provides a minimal local chat page connected to the same target agent; it does not require a complete e-commerce UI.
 
 ```text
-Scenario → User simulator → Playwright adapter → Chat UI → Target agent
-                  ↑                              │          │
-                  └──── 用户可见对话/页面状态 ─────┘          ↓
-                                                       τ 环境工具
-                                                            ↓
-                              独立 evaluator ← 事件日志 + 最终状态
+Scenario -> User simulator -> Playwright adapter -> Chat UI -> Target agent
+                  ^                              |          |
+                  +---- user-visible chat/UI ----+          v
+                                                    tau environment tools
+                                                            |
+                                                            v
+                         Independent evaluator <- event log + final state
 ```
 
-最小模块：
+Minimum modules:
 
-- `scenario`：来源、目标、用户已知/未知信息、偏好、披露与确认规则、轮数限制。
-- `simulator`：输入可见历史和用户私有状态，返回下一条消息或结束；记录决策理由供调试，但不发给目标 agent。
-- `adapter`：发送消息、按 turn id 等待完整回复、读取用户可见内容；不使用固定 sleep 判定一轮结束。
-- `evaluator`：业务结果与关键时序检查。用户生成器不兼任最终裁判。
-- `reporter`：输出 JSON 运行记录和 Markdown 摘要，关联 Playwright trace、失败断言及对应对话。
+- `scenario`: source, goal, user-known and user-unknown information, preferences, disclosure and confirmation rules, and turn limits.
+- `simulator`: takes visible history and private user state, then returns the next message or stops; records decision rationales for debugging without sending them to the target agent.
+- `adapter`: sends messages, waits for a complete response by turn ID, and reads user-visible content; does not use fixed sleeps to decide that a turn is complete.
+- `evaluator`: checks business outcomes and critical sequencing. The user generator does not also act as the final judge.
+- `reporter`: emits a JSON run record and Markdown summary that connect the Playwright trace, failed assertions, and relevant conversation.
 
-先自行实现薄的交替调用循环，不绑定大型评估平台。后续按接入需要再评估 OpenEvals；不重复建设通用模型调用库。
+Initially implement a thin alternating-call loop rather than binding the project to a large evaluation platform. Reassess OpenEvals later based on integration needs; do not rebuild a general-purpose model-calling library.
 
-## Simulator 的信息边界与可靠性
+## Simulator information boundaries and reliability
 
-Simulator 能看到用户场景、对话和用户可见 UI；不能看到隐藏目标答案、预期商品 ID、数据库全量内容、agent 内部推理或 evaluator 结果。
+The simulator can see the user scenario, conversation, and user-visible UI. It cannot see hidden target answers, expected product IDs, the full database contents, agent-internal reasoning, or evaluator results.
 
-上游用户信息与评分信息在加载时拆开，不能把完整 task JSON 直接放进 simulator prompt。身份和偏好由固定状态保存，语言表达可变。遇到未知信息应承认不知道，不能编造邮箱或自行放宽条件。
+Split upstream user information from scoring information during loading; do not put the complete task JSON directly into the simulator prompt. Keep identity and preferences in fixed state while allowing their linguistic expression to vary. When information is unknown, the simulator must acknowledge that it does not know rather than inventing an email address or relaxing constraints on its own.
 
-第一版采用规则约束与 LLM 表达结合：规则维护事实、偏好及确认范围；模型解释回复并生成自然语言。结构化输出校验失败时有限重试，仍失败则记录 simulator error，不归咎于 agent。
+The first version combines rule-based constraints with LLM expression: rules maintain facts, preferences, and the scope of confirmation, while the model interprets responses and generates natural language. Retry structured-output validation failures a limited number of times. If validation still fails, record a simulator error rather than blaming the agent.
 
-停止条件：用户结束、轮数上限、时间上限、费用上限或运行错误。用户说“完成”只触发结束，不自动意味着通过。默认最多 12 个用户轮次，另设工具调用和单轮时间限制。
+Stop conditions: the user ends the conversation, a turn limit is reached, a time limit is reached, a cost limit is reached, or an execution error occurs. A user saying “done” only triggers a stop; it does not automatically mean the run passed. Default to at most 12 user turns, with additional limits on tool calls and per-turn duration.
 
-## 评分与诊断
+## Scoring and diagnosis
 
-分别记录三类结果，保留多重失败证据，不强行归为单一原因：
+Record three result categories separately and preserve evidence for multiple failures rather than forcing them into a single cause:
 
-1. 业务：复用上游 evaluator，并补充未授权商品未被变更、无重复写操作等检查。
-2. 过程：身份验证先于受保护查询；明确确认先于写入。优先根据工具日志和可控替身事件验证；自然语言确认识别的不确定结果单独标记并人工复核。
-3. Simulator / harness：用户是否违背既定偏好、泄漏隐藏信息、无根据确认；浏览器是否超时或漏读回复。
+1. Business: reuse the upstream evaluator and add checks that unauthorized products were not changed and that no duplicate writes occurred.
+2. Process: authentication must precede protected queries, and explicit confirmation must precede writes. Prefer verification from tool logs and controlled-substitute events; flag uncertain natural-language confirmation detection separately for human review.
+3. Simulator / harness: determine whether the user violated established preferences, leaked hidden information, or confirmed without justification, and whether the browser timed out or failed to read a response.
 
-记录 scenario/version、模型版本、prompt 哈希、参数、初始状态哈希、全部可见消息、工具事件、断言、token 用量、耗时与费用。固定 seed 不等于确定性重现。
+Record the scenario/version, model version, prompt hash, parameters, initial-state hash, all visible messages, tool events, assertions, token usage, duration, and cost. A fixed seed does not imply deterministic reproduction.
 
-区分两种“重现”：轨迹回放用于查看当时发生的事；重新执行用于验证问题是否再次出现。保存静态输入可以帮助排查，但不保证新的 agent 路径仍与旧输入兼容。
+Distinguish two meanings of “reproduction”: trajectory replay shows what happened at the time, while re-execution tests whether the issue occurs again. Saving static inputs helps investigation but does not guarantee that a new agent path remains compatible with the old inputs.
 
-## 三个周末的里程碑
+## Three-weekend milestones
 
-### 周末一：公开题闭环
+### Weekend 1: close the loop on the public task
 
-- [ ] 建立独立工程和来源清单，固定上游版本及哈希。
-- [ ] 运行原题，核实工具写入语义和 evaluator 结果。
-- [ ] 建立隔离 session、重置环境、消息与工具事件记录。
-- [ ] 实现固定输入基线与动态用户的 API 闭环。
-- 交付：同一道公开题的两条可检查轨迹与真实状态断言。
+- [ ] Create an independent project and source manifest, and pin the upstream version and hashes.
+- [ ] Run the original task and verify tool-write semantics and evaluator results.
+- [ ] Establish isolated sessions, environment reset, and message and tool-event recording.
+- [ ] Implement the API loop for both a fixed-input baseline and a dynamic user.
+- Deliverable: two inspectable trajectories for the same public task with assertions against real state.
 
-### 周末二：Playwright 接入与错误检测
+### Weekend 2: Playwright integration and error detection
 
-- [ ] 建立本地聊天页面和 Playwright adapter。
-- [ ] 加入两个合理对话变化与三个可控错误。
-- [ ] 输出失败证据和 Playwright trace，区分业务、simulator、harness 问题。
-- 交付：正确 agent 改变提问顺序仍可通过；错误执行仍被断言捕获的 demo。
+- [ ] Build a local chat page and Playwright adapter.
+- [ ] Add two reasonable conversation variations and three controllable errors.
+- [ ] Output failure evidence and a Playwright trace while distinguishing business, simulator, and harness issues.
+- Deliverable: a demo in which a correct agent can change question order and still pass, while incorrect execution is still caught by assertions.
 
-### 周末三：重复实验与外部试用
+### Weekend 3: repeated experiments and external trial
 
-- [ ] 在六种配置下，两种输入各运行 5 次，共 60 次小样本实验。
-- [ ] 报告成功次数/总数、误报、漏报、模拟器违规、费用及耗时；不把小样本解释为泛化证明。
-- [ ] 人工复核全部失败与 simulator 违规记录。
-- [ ] 编写接入示例，邀请 2–3 位开发者使用公开 demo 试用；联系邀请由项目作者自行决定和发送。
-- 交付：简短实验报告和是否继续投入的决定。
+- [ ] Run each of two input types five times under six configurations, for 60 small-sample experiments in total.
+- [ ] Report successes/total runs, false positives, false negatives, simulator violations, cost, and duration; do not interpret the small sample as proof of generalization.
+- [ ] Manually review every failure and simulator-violation record.
+- [ ] Write an integration example and invite 2–3 developers to try the public demo; the project author decides whether and how to send invitations.
+- Deliverable: a short experiment report and a decision on whether to continue investing in the project.
 
-## 预算与继续条件
+## Budget and continuation criteria
 
-先估算单次成本，再启用真实模型实验；建议整轮试验设置 US$20 硬上限，这是预算目标而非成本报价。达到上限就停止并报告未完成项。API 密钥只从本地环境读取，不入库。
+Estimate per-run cost before enabling real-model experiments. Set a suggested hard limit of US$20 for the complete experiment cycle; this is a budget target, not a cost quotation. Stop at the limit and report unfinished items. Read API keys only from the local environment and never commit them.
 
-MVP 工程验收：可控正确替身在两类合理变化下全部通过；三类错误均触发预期断言；失败轨迹有足够证据解释原因；没有隐藏答案输入 simulator。
+MVP engineering acceptance: the controllable correct substitute passes both reasonable variations; all three error types trigger the expected assertions; failed trajectories provide enough evidence to explain the cause; and no hidden answers are provided to the simulator.
 
-继续投入的信号：动态输入相较固定回放减少路径变化导致的误报，同时不掩盖业务错误；至少两位外部试用者能接入，并认为诊断结果有用。若 simulator 频繁偏离规则或主要工作都在解释误报，先改进约束和可观测性。
+Signals for further investment: dynamic input reduces false positives caused by path variation compared with fixed replay without hiding business errors; at least two external trial users can integrate it and find the diagnostic output useful. If the simulator frequently departs from its rules or most of the work involves explaining false positives, improve constraints and observability first.
 
-第一版不做 SaaS、账号系统、dashboard、语音、多域 benchmark、真人行为拟合或训练。第一题只能证明工程闭环；证明通用性需后续增加独立场景。
+The first version will not include SaaS, an account system, a dashboard, voice, multiple benchmark domains, modeling of real human behavior, or training. The first task can demonstrate only an engineering loop; demonstrating generality requires additional independent scenarios later.
 
-## 下一次工作的起点
+## Starting point for the next work session
 
-从“周末一”的公开版本导入和原题运行开始。当前没有复制上游数据、安装依赖、调用付费模型，也没有实现上述组件。
+Begin with the Weekend 1 import of the pinned public version and execution of the original task. No upstream data has been copied, no dependencies have been installed, no paid model has been called, and none of the components above have been implemented yet.
