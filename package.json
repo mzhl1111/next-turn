@@ -8,8 +8,10 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "setup:tau2": "bash scripts/setup_tau2.sh",
     "test": "node --import tsx --test 'test/**/*.test.ts'",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "validate:tau2": "bash scripts/validate_tau2_task_1.sh"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -17,4 +19,3 @@
     "typescript": "^5.7.0"
   }
 }
-

@@ -1,0 +1,6 @@
+# Pinned public benchmark runtime. Do not add voice extras for the MVP.
+tau2 @ git+https://github.com/sierra-research/tau2-bench.git@fc0055dc4e0a316c3f83133267fbd6faaa770992
+
+# tau2 v1.0.1 imports audioop during text-mode startup. Python 3.13 removed it
+# from the standard library, so the maintained compatibility backport is needed.
+audioop-lts; python_version >= "3.13"

@@ -19,8 +19,9 @@ Weekend 1 is in progress:
 - run fixed-replay and dynamic simulators against a controlled agent;
 - record messages, tool events, assertions, and stop reasons.
 
-The upstream Python environment has not yet been executed. tau2-bench `v1.0.1`
-requires Python `>=3.12,<3.14`; Python 3.14 is not compatible.
+The pinned upstream Python environment now passes a no-LLM validation of task
+`"1"` tool semantics, final state, and database evaluator reward under Python
+3.13. A real-model benchmark run has not been started.
 
 ## Development
 
@@ -34,3 +35,23 @@ npm run typecheck
 
 No paid model or API key is required for the controlled-agent tests.
 
+### Pinned tau-bench environment
+
+The upstream text runtime requires Python 3.12 or 3.13. With Homebrew's
+Python 3.13 installed:
+
+```sh
+npm run setup:tau2
+npm run validate:tau2
+```
+
+The requirement uses the exact upstream commit recorded in the source manifest
+and intentionally omits voice extras. It also installs `audioop-lts` on Python
+3.13 because tau2 v1.0.1 imports `audioop` during text-mode startup even though
+that module was removed from Python's standard library in 3.13.
+
+Setup creates an ignored `.venv`, checks out the pinned public benchmark under
+the ignored `.tau2` directory, and verifies the source hashes. Validation then
+replays the task's expected public tool actions and checks the resulting state
+with the upstream environment evaluator. It does not call an LLM or use an API
+key.

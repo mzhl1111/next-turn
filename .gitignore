@@ -1,4 +1,6 @@
 node_modules/
+.venv/
+.tau2/
 dist/
 coverage/
 artifacts/
@@ -8,4 +10,3 @@ test-results/
 .env.*
 !.env.example
 .DS_Store
-

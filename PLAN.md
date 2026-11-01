@@ -1,6 +1,6 @@
 # Dynamic User Testing: Side Project MVP Plan
 
-Date: 2026-11-01. Status: topic selection and planning complete; implementation and experiments have not yet started.
+Date: 2026-11-01. Status: Weekend 1 implementation in progress; the controlled harness and upstream tool/evaluator validation are complete.
 
 ## Goals and boundaries
 
@@ -101,10 +101,10 @@ Distinguish two meanings of “reproduction”: trajectory replay shows what hap
 
 ### Weekend 1: close the loop on the public task
 
-- [ ] Create an independent project and source manifest, and pin the upstream version and hashes.
+- [x] Create an independent project and source manifest, and pin the upstream version and hashes.
 - [ ] Run the original task and verify tool-write semantics and evaluator results.
 - [ ] Establish isolated sessions, environment reset, and message and tool-event recording.
-- [ ] Implement the API loop for both a fixed-input baseline and a dynamic user.
+- [x] Implement the API loop for both a fixed-input baseline and a dynamic user.
 - Deliverable: two inspectable trajectories for the same public task with assertions against real state.
 
 ### Weekend 2: Playwright integration and error detection
@@ -134,4 +134,4 @@ The first version will not include SaaS, an account system, a dashboard, voice, 
 
 ## Starting point for the next work session
 
-Begin with the Weekend 1 import of the pinned public version and execution of the original task. No upstream data has been copied, no dependencies have been installed, no paid model has been called, and none of the components above have been implemented yet.
+Connect the TypeScript harness to the pinned upstream retail environment, preserve isolated state reset between runs, and emit inspectable fixed and dynamic trajectories backed by real state. The public task's expected tool sequence, write semantics, final state, and environment evaluator reward have been validated without an LLM or API key. No paid model has been called.
