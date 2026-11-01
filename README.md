@@ -12,16 +12,18 @@ upstream pin and file hashes.
 
 ## Current scope
 
-Weekend 1 is in progress:
+Weekend 1 is complete:
 
 - pin and verify the public upstream fixture;
 - model a scenario without exposing evaluator-only answers to the simulator;
 - run fixed-replay and dynamic simulators against a controlled agent;
-- record messages, tool events, assertions, and stop reasons.
+- execute both trajectories against isolated tau2 environments;
+- record messages, real tool results, assertions, state hashes, and stop reasons.
 
-The pinned upstream Python environment now passes a no-LLM validation of task
-`"1"` tool semantics, final state, and database evaluator reward under Python
-3.13. A real-model benchmark run has not been started.
+The pinned upstream Python environment passes a no-LLM validation of task `"1"`
+tool semantics, final state, and database evaluator reward under Python 3.13.
+The first bounded OpenRouter model trial also passed; its result is documented
+in [the run report](./docs/runs/2026-11-01-openrouter-glm-task-1.md).
 
 ## Development
 
@@ -82,3 +84,22 @@ the ignored `.tau2` directory, and verifies the source hashes. Validation then
 replays the task's expected public tool actions and checks the resulting state
 with the upstream environment evaluator. It does not call an LLM or use an API
 key.
+
+### Weekend 1 trajectories
+
+Generate the fixed and dynamic controlled trajectories after setup:
+
+```sh
+npm run run:weekend1
+```
+
+The command constructs a fresh tau2 retail environment for each input type,
+executes the recorded tool calls against real benchmark state, and requires
+both final states to receive a database reward of `1.0`. It also verifies that
+the two sessions have distinct IDs, identical initial-state hashes, and state
+changes isolated to their own environment instances.
+
+Inspectable local output is written to the ignored `artifacts/weekend1/`
+directory as `fixed.json`, `dynamic.json`, `trajectories.json`, and
+`summary.md`. These files contain visible messages and tool results but no
+model reasoning or API secrets.

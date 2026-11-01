@@ -1,6 +1,6 @@
 # Dynamic User Testing: Side Project MVP Plan
 
-Date: 2026-11-01. Status: Weekend 1 implementation in progress; the controlled harness, upstream tool/evaluator validation, and first real-model trial are complete.
+Date: 2026-11-01. Status: Weekend 1 complete; the controlled harness, isolated real-state trajectories, upstream validation, and first real-model trial are complete.
 
 ## Goals and boundaries
 
@@ -103,7 +103,7 @@ Distinguish two meanings of “reproduction”: trajectory replay shows what hap
 
 - [x] Create an independent project and source manifest, and pin the upstream version and hashes.
 - [x] Run the original task and verify tool-write semantics and evaluator results.
-- [ ] Establish isolated sessions, environment reset, and message and tool-event recording.
+- [x] Establish isolated sessions, environment reset, and message and tool-event recording.
 - [x] Implement the API loop for both a fixed-input baseline and a dynamic user.
 - Deliverable: two inspectable trajectories for the same public task with assertions against real state.
 
@@ -134,4 +134,4 @@ The first version will not include SaaS, an account system, a dashboard, voice, 
 
 ## Starting point for the next work session
 
-Connect the TypeScript harness to the pinned upstream retail environment, preserve isolated state reset between runs, and emit inspectable fixed and dynamic trajectories backed by real state. The public task's expected tool sequence, write semantics, final state, and environment evaluator reward have been validated without an LLM or API key. No paid model has been called.
+Begin Weekend 2 by building the minimal local chat page and Playwright adapter around the existing harness. Use completion signals keyed by turn ID rather than fixed sleeps, preserve the same isolated tau2 reset path, and add the two reasonable conversation variations before implementing the three controlled error cases. The dashboard prototype remains on the separate `codex/task1-dashboard` branch until the adapter work is ready to incorporate it.
