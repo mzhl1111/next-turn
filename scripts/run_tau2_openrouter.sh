@@ -31,7 +31,14 @@ fi
 
 OPENROUTER_MODEL="${OPENROUTER_MODEL:-$(load_env_value OPENROUTER_MODEL)}"
 OPENROUTER_MODEL="${OPENROUTER_MODEL:-z-ai/glm-5.3-flash}"
+TAU2_TIMEOUT_SECONDS="${TAU2_TIMEOUT_SECONDS:-$(load_env_value TAU2_TIMEOUT_SECONDS)}"
+TAU2_TIMEOUT_SECONDS="${TAU2_TIMEOUT_SECONDS:-360}"
+if [[ ! "${TAU2_TIMEOUT_SECONDS}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "TAU2_TIMEOUT_SECONDS must be a positive integer." >&2
+  exit 1
+fi
 readonly LITELLM_MODEL="openrouter/${OPENROUTER_MODEL#openrouter/}"
+readonly TAU2_TIMEOUT_SECONDS
 readonly TAU2_DATA_DIR="${PROJECT_DIR}/.tau2/tau2-bench/data"
 readonly SAVE_NAME="${TAU2_SAVE_TO:-next-turn-glm-task-1-$(date -u +%Y%m%dT%H%M%SZ)}"
 readonly RESULT_FILE="${TAU2_DATA_DIR}/simulations/${SAVE_NAME}/results.json"
@@ -52,7 +59,7 @@ export LITELLM_LOCAL_MODEL_COST_MAP=True
   --user-llm "${LITELLM_MODEL}" \
   --max-concurrency 1 \
   --max-steps 24 \
-  --timeout 180 \
+  --timeout "${TAU2_TIMEOUT_SECONDS}" \
   --max-retries 0 \
   --save-to "${SAVE_NAME}" \
   --seed 300 \
