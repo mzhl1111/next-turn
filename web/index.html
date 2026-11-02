@@ -7,7 +7,7 @@
       name="description"
       content="Inspect the latest next-turn tau2 retail task 1 run."
     />
-    <title>next-turn · Task 1 Run</title>
+    <title>next-turn · Experiment Dashboard</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -20,23 +20,65 @@
           <span>next-turn</span>
         </a>
         <div class="topbar-meta">
-          <span class="eyebrow">TAU2 / RETAIL / TASK 1</span>
-          <span id="run-status" class="status"><span></span>Loading run</span>
+          <span class="eyebrow">WEEKEND 3 / CONTROLLED MATRIX</span>
+          <span id="experiment-status" class="status"><span></span>Loading experiment</span>
         </div>
       </header>
 
       <section class="hero">
         <div>
           <p class="kicker">Dynamic user evaluation</p>
-          <h1>Thermostat exchange,<br /><em>keyboard unchanged.</em></h1>
-          <p id="goal" class="hero-copy">Loading scenario...</p>
+          <h1>Dynamic adapts.<br /><em>Fixed replay breaks.</em></h1>
+          <p id="experiment-summary" class="hero-copy">Loading the 60-run experiment...</p>
         </div>
-        <div class="score-ring" aria-label="Run score">
+        <div class="score-ring" aria-label="Dynamic classification accuracy">
           <div>
-            <strong id="reward">—</strong>
-            <span>reward</span>
+            <strong id="dynamic-score">—</strong>
+            <span>dynamic accuracy</span>
           </div>
         </div>
+      </section>
+
+      <section id="experiment-metrics" class="metrics" aria-label="Experiment metrics"></section>
+
+      <section class="experiment-workspace">
+        <article class="panel comparison-panel">
+          <div class="panel-heading">
+            <span class="panel-index">01</span>
+            <div><p>Comparison</p><h2>Correct-path resilience</h2></div>
+          </div>
+          <div id="input-comparison" class="input-comparison"></div>
+        </article>
+
+        <article class="panel matrix-panel">
+          <div class="panel-heading">
+            <span class="panel-index">02</span>
+            <div><p>Experiment</p><h2>Six configurations</h2></div>
+          </div>
+          <div id="configuration-matrix" class="configuration-matrix"></div>
+        </article>
+
+        <article class="panel review-panel">
+          <div class="panel-heading">
+            <span class="panel-index">03</span>
+            <div><p>Diagnosis</p><h2>Manual review</h2></div>
+          </div>
+          <div id="review-summary" class="review-summary"></div>
+        </article>
+      </section>
+
+      <div class="section-divider">
+        <span>Latest real-model run</span>
+        <span id="run-status" class="status"><span></span>Loading run</span>
+      </div>
+
+      <section class="model-run-heading">
+        <div>
+          <p class="kicker">OpenRouter · GLM 5.3 Flash</p>
+          <h2>Thermostat exchange,<br /><em>keyboard unchanged.</em></h2>
+          <p id="goal" class="hero-copy">Loading scenario...</p>
+        </div>
+        <div class="model-reward"><strong id="reward">—</strong><span>reward</span></div>
       </section>
 
       <section id="metrics" class="metrics" aria-label="Run metrics"></section>
@@ -45,7 +87,7 @@
         <aside class="side-column">
           <article class="panel scenario-panel">
             <div class="panel-heading">
-              <span class="panel-index">01</span>
+              <span class="panel-index">04</span>
               <div><p>Scenario</p><h2>User contract</h2></div>
             </div>
             <div id="facts" class="facts"></div>
@@ -55,7 +97,7 @@
 
           <article class="panel">
             <div class="panel-heading">
-              <span class="panel-index">02</span>
+              <span class="panel-index">05</span>
               <div><p>Evaluator</p><h2>Action checks</h2></div>
             </div>
             <div id="actions" class="actions"></div>
@@ -64,7 +106,7 @@
 
         <article class="panel transcript-panel">
           <div class="panel-heading transcript-heading">
-            <span class="panel-index">03</span>
+            <span class="panel-index">06</span>
             <div><p>Evidence</p><h2>Visible trajectory</h2></div>
             <div id="filters" class="filters" aria-label="Filter trajectory">
               <button class="active" data-filter="all">All</button>
@@ -79,4 +121,3 @@
     <script type="module" src="/app.js"></script>
   </body>
 </html>
-

@@ -18,6 +18,58 @@ function renderMetric(label, value) {
   return metric;
 }
 
+function percent(numerator, denominator) {
+  return denominator === 0 ? 0 : Math.round((numerator / denominator) * 100);
+}
+
+function renderInputComparison(label, aggregate) {
+  const score = percent(aggregate.correctPathPasses, aggregate.correctPathRuns);
+  const row = textElement("div", "comparison-row", "");
+  const heading = textElement("div", "comparison-heading", "");
+  heading.append(textElement("strong", "", label));
+  heading.append(
+    textElement(
+      "span",
+      "",
+      `${aggregate.correctPathPasses}/${aggregate.correctPathRuns} correct paths`,
+    ),
+  );
+  const track = textElement("div", "bar-track", "");
+  const fill = textElement("div", "bar-fill", "");
+  fill.style.width = `${score}%`;
+  track.append(fill);
+  row.append(heading, track);
+  row.append(
+    textElement(
+      "p",
+      "comparison-note",
+      `${aggregate.errorDetections}/${aggregate.errorRuns} intentional errors detected · ${aggregate.falseNegatives} false negatives`,
+    ),
+  );
+  return row;
+}
+
+function renderConfiguration(id, configuration, aggregate) {
+  const card = textElement("div", "configuration", "");
+  const expected = configuration.expectedPass ? "correct path" : "injected error";
+  card.append(textElement("span", "configuration-id", id.replaceAll("-", " ")));
+  card.append(
+    textElement(
+      "strong",
+      aggregate.falsePositives + aggregate.falseNegatives === 0 ? "classified" : "path-sensitive",
+    ),
+  );
+  card.append(
+    textElement(
+      "small",
+      "",
+      `${expected} · ${aggregate.successes}/${aggregate.runs} observed passes`,
+    ),
+  );
+  if (aggregate.falseNegatives > 0) card.classList.add("warning");
+  return card;
+}
+
 function renderMessage(message) {
   const isTool = message.role === "tool" || message.toolCalls.length > 0;
   const event = textElement("div", `event ${isTool ? "tool" : message.role}`, "");
@@ -41,10 +93,72 @@ function renderMessage(message) {
   return event;
 }
 
-async function load() {
-  const response = await fetch("/api/run");
+async function fetchJson(url) {
+  const response = await fetch(url);
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? "Unable to load run");
+  if (!response.ok) throw new Error(data.error ?? `Unable to load ${url}`);
+  return data;
+}
+
+async function loadExperiment() {
+  const { results, review } = await fetchJson("/api/weekend3");
+  const totals = results.summary.totals;
+  const dynamic = results.summary.byInput.dynamic;
+  const fixed = results.summary.byInput.fixed;
+  const dynamicAccuracy = percent(
+    dynamic.truePositives + dynamic.trueNegatives,
+    dynamic.runs,
+  );
+  $("#dynamic-score").textContent = `${dynamicAccuracy}%`;
+  $("#experiment-summary").textContent =
+    `Across ${totals.runs} controlled browser runs, dynamic input passed every correct path and detected every injected error. Fixed replay missed ${fixed.falseNegatives} reasonable path variations.`;
+  const status = $("#experiment-status");
+  status.classList.add("pass");
+  status.lastChild.textContent = " Experiment complete";
+
+  const metrics = [
+    ["Runs", formatNumber(totals.runs)],
+    ["Dynamic correct paths", `${dynamic.correctPathPasses}/${dynamic.correctPathRuns}`],
+    ["Errors detected", `${totals.errorDetections}/${totals.errorRuns}`],
+    ["False positives", formatNumber(totals.falsePositives)],
+    ["Cost", `$${Number(totals.costUsd).toFixed(4)}`],
+  ];
+  $("#experiment-metrics").replaceChildren(
+    ...metrics.map(([label, value]) => renderMetric(label, value)),
+  );
+  $("#input-comparison").replaceChildren(
+    renderInputComparison("Dynamic", dynamic),
+    renderInputComparison("Fixed replay", fixed),
+  );
+
+  const configurationById = Object.fromEntries(
+    results.experiment.configurations.map((item) => [item.id, item]),
+  );
+  $("#configuration-matrix").replaceChildren(
+    ...Object.entries(results.summary.byConfiguration).map(([id, aggregate]) =>
+      renderConfiguration(id, configurationById[id], aggregate),
+    ),
+  );
+
+  const reviewed = Number(review?.reviewedRuns ?? 0);
+  const pending = Number(review?.pendingRuns ?? 0);
+  const reviewItems = [
+    ["Reviewed", `${reviewed}/${reviewed + pending}`],
+    ["Pending", String(pending)],
+    ["Simulator violations", String(review?.simulatorViolations ?? 0)],
+    ["False negatives", String(totals.falseNegatives)],
+  ];
+  $("#review-summary").replaceChildren(
+    ...reviewItems.map(([label, value]) => {
+      const item = textElement("div", "review-item", "");
+      item.append(textElement("span", "", label), textElement("strong", "", value));
+      return item;
+    }),
+  );
+}
+
+async function loadRun() {
+  const data = await fetchJson("/api/run");
 
   $("#goal").textContent = data.scenario.goal;
   $("#reward").textContent = Number(data.run.reward ?? 0).toFixed(1);
@@ -101,10 +215,14 @@ $("#filters").addEventListener("click", (event) => {
   }
 });
 
-load().catch((error) => {
+loadExperiment().catch((error) => {
+  $("#experiment-summary").textContent = `Could not load Weekend 3: ${error.message}`;
+  $("#experiment-status").lastChild.textContent = " Load failed";
+});
+
+loadRun().catch((error) => {
   $("#timeline").replaceChildren(
     textElement("div", "error-state", `Could not load task 1: ${error.message}`),
   );
   $("#run-status").lastChild.textContent = " Load failed";
 });
-

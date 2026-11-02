@@ -14,6 +14,13 @@ const simulationsDir = join(
   "data",
   "simulations",
 );
+const weekend3Results = join(projectDir, "artifacts", "weekend3", "results.json");
+const weekend3Review = join(
+  projectDir,
+  "artifacts",
+  "weekend3",
+  "review-summary.json",
+);
 const port = Number(process.env.PORT ?? 4173);
 
 interface JsonObject {
@@ -95,7 +102,12 @@ function presentResults(payload: JsonObject, source: string): JsonObject {
   const usageMessages = asArray(simulation.messages).filter(
     (item) => asObject(item).usage !== null && asObject(item).usage !== undefined,
   );
-  const totals = usageMessages.reduce(
+  const totals = usageMessages.reduce<{
+    prompt: number;
+    completion: number;
+    reasoning: number;
+    cost: number;
+  }>(
     (result, item) => {
       const message = asObject(item);
       const usage = asObject(message.usage);
@@ -149,6 +161,23 @@ const mimeTypes: Record<string, string> = {
 const server = createServer(async (request, response) => {
   try {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
+    if (url.pathname === "/health") {
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      response.end(JSON.stringify({ status: "ok" }));
+      return;
+    }
+    if (url.pathname === "/api/weekend3") {
+      if (!existsSync(weekend3Results)) {
+        throw new Error("No Weekend 3 results found. Run npm run run:weekend3 first.");
+      }
+      const results = JSON.parse(await readFile(weekend3Results, "utf8"));
+      const review = existsSync(weekend3Review)
+        ? JSON.parse(await readFile(weekend3Review, "utf8"))
+        : null;
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+      response.end(JSON.stringify({ results, review }));
+      return;
+    }
     if (url.pathname === "/api/run") {
       const source = await findLatestResults();
       const payload = asObject(JSON.parse(await readFile(source, "utf8")));
@@ -178,4 +207,3 @@ const server = createServer(async (request, response) => {
 server.listen(port, "127.0.0.1", () => {
   process.stdout.write(`Task 1 dashboard: http://127.0.0.1:${port}\n`);
 });
-
