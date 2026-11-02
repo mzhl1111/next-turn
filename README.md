@@ -38,6 +38,16 @@ npm test
 npm run typecheck
 ```
 
+View the latest local task-1 run in the dashboard:
+
+```sh
+npm run dev
+```
+
+Then open <http://127.0.0.1:4173>. The dashboard reads the newest local tau2
+result at request time and displays only visible conversation content, tool
+activity, evaluator checks, usage, and cost—not model reasoning.
+
 No paid model or API key is required for the controlled-agent tests.
 
 ### OpenRouter model smoke test

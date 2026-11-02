@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Inspect the latest next-turn tau2 retail task 1 run."
+    />
+    <title>next-turn · Task 1 Run</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <main>
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="next-turn dashboard home">
+          <span class="brand-mark">N↗</span>
+          <span>next-turn</span>
+        </a>
+        <div class="topbar-meta">
+          <span class="eyebrow">TAU2 / RETAIL / TASK 1</span>
+          <span id="run-status" class="status"><span></span>Loading run</span>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="kicker">Dynamic user evaluation</p>
+          <h1>Thermostat exchange,<br /><em>keyboard unchanged.</em></h1>
+          <p id="goal" class="hero-copy">Loading scenario...</p>
+        </div>
+        <div class="score-ring" aria-label="Run score">
+          <div>
+            <strong id="reward">—</strong>
+            <span>reward</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="metrics" class="metrics" aria-label="Run metrics"></section>
+
+      <section class="workspace">
+        <aside class="side-column">
+          <article class="panel scenario-panel">
+            <div class="panel-heading">
+              <span class="panel-index">01</span>
+              <div><p>Scenario</p><h2>User contract</h2></div>
+            </div>
+            <div id="facts" class="facts"></div>
+            <h3>Hard constraints</h3>
+            <ol id="constraints" class="constraints"></ol>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <span class="panel-index">02</span>
+              <div><p>Evaluator</p><h2>Action checks</h2></div>
+            </div>
+            <div id="actions" class="actions"></div>
+          </article>
+        </aside>
+
+        <article class="panel transcript-panel">
+          <div class="panel-heading transcript-heading">
+            <span class="panel-index">03</span>
+            <div><p>Evidence</p><h2>Visible trajectory</h2></div>
+            <div id="filters" class="filters" aria-label="Filter trajectory">
+              <button class="active" data-filter="all">All</button>
+              <button data-filter="dialogue">Dialogue</button>
+              <button data-filter="tools">Tools</button>
+            </div>
+          </div>
+          <div id="timeline" class="timeline" aria-live="polite"></div>
+        </article>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
+

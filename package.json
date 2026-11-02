@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "dev": "node --import tsx scripts/serve_frontend.ts",
     "dev:chat": "node --import tsx scripts/serve_chat.ts",
     "run:weekend1": "node --import tsx scripts/run_weekend1.ts",
     "run:tau2:openrouter": "bash scripts/run_tau2_openrouter.sh",
