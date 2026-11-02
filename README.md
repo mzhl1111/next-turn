@@ -10,6 +10,22 @@ retail task `"1"` at release `v1.0.1`. See [PLAN.md](./PLAN.md) for the experime
 design and [docs/upstream-sources.md](./docs/upstream-sources.md) for the exact
 upstream pin and file hashes.
 
+## Interface and evidence
+
+The browser task UI below shows a completed dynamic, rule-based user path. It
+adapts to question order, withholds evaluator-only state, and records completion
+by turn ID rather than a fixed delay.
+
+![Completed dynamic task-1 conversation](docs/images/task-ui-dynamic-path.png)
+
+The result dashboard below shows a separate, real OpenRouter run using
+`z-ai/glm-5.3-flash` for both the tau2 agent and user simulator. This bounded
+trial made 13 model calls and timed out with reward `0`; the dashboard preserves
+the visible trajectory, 63,384 total tokens, and the returned US$0.004740 cost
+for review.
+
+![Real OpenRouter timeout result dashboard](docs/images/openrouter-result-dashboard.png)
+
 ## Current scope
 
 The three controlled implementation weekends are complete; the external trial

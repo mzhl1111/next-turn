@@ -10,6 +10,7 @@ import {
 } from "../src/index.js";
 
 const baseURL = process.env.NEXT_TURN_CHAT_URL ?? "http://127.0.0.1:4174";
+const screenshotPath = process.env.NEXT_TURN_SCREENSHOT_PATH;
 const browser = await chromium.launch({ headless: true });
 
 try {
@@ -36,6 +37,13 @@ try {
       2,
     )}\n`,
   );
+  if (screenshotPath) {
+    await page.locator("[data-messages]").evaluate((element) => {
+      element.style.maxHeight = "none";
+      element.style.overflow = "visible";
+    });
+    await page.locator(".page-shell").screenshot({ path: screenshotPath });
+  }
   await context.close();
 } finally {
   await browser.close();
