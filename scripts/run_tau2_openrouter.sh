@@ -8,7 +8,15 @@ load_env_value() {
   local name="$1"
   local file="${PROJECT_DIR}/.env"
   if [[ -f "${file}" ]]; then
-    sed -n "s/^${name}=//p" "${file}" | tail -n 1
+    local value
+    value="$(sed -n "s/^[[:space:]]*${name}[[:space:]]*=[[:space:]]*//p" "${file}" | tail -n 1)"
+    value="${value%$'\r'}"
+    if [[ "${value}" == \"*\" && "${value}" == *\" ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ "${value}" == \'*\' && "${value}" == *\' ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+    printf '%s' "${value}"
   fi
 }
 
@@ -52,4 +60,3 @@ export LITELLM_LOCAL_MODEL_COST_MAP=True
 
 "${PROJECT_DIR}/.venv/bin/python" \
   "${SCRIPT_DIR}/summarize_tau2_run.py" "${RESULT_FILE}"
-

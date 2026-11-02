@@ -28,7 +28,9 @@ def main() -> None:
 
     simulation = simulations[0]
     messages = simulation.get("messages", [])
-    action_checks = simulation.get("reward_info", {}).get("action_checks", [])
+    reward_info = simulation.get("reward_info") or {}
+    db_check = reward_info.get("db_check") or {}
+    action_checks = reward_info.get("action_checks") or []
     providers = Counter(
         provider
         for message in messages
@@ -38,9 +40,7 @@ def main() -> None:
     summary = {
         "task_id": simulation.get("task_id"),
         "reward": nested_number(simulation, "reward_info", "reward"),
-        "db_match": simulation.get("reward_info", {})
-        .get("db_check", {})
-        .get("db_match"),
+        "db_match": db_check.get("db_match"),
         "termination_reason": simulation.get("termination_reason"),
         "duration_seconds": simulation.get("duration"),
         "message_count": len(messages),
