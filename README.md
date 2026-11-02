@@ -12,17 +12,16 @@ upstream pin and file hashes.
 
 ## Interface and evidence
 
-The browser task UI below shows a completed dynamic, rule-based user path. It
-adapts to question order, withholds evaluator-only state, and records completion
-by turn ID rather than a fixed delay.
+Both images below load the same saved OpenRouter run through `/api/run`. The
+first is a read-only conversation view containing exactly the 12 user-visible
+assistant and simulated-user messages; tool calls and tool results remain hidden.
 
-![Completed dynamic task-1 conversation](docs/images/task-ui-dynamic-path.png)
+![User-visible conversation from the successful OpenRouter run](docs/images/openrouter-conversation-ui.png)
 
-The result dashboard below shows a separate, real OpenRouter run using
-`z-ai/glm-5.3-flash` for both the tau2 agent and user simulator. This bounded
-trial made 17 model calls, matched all five expected actions, and finished with
-reward `1.0` and a database match. The dashboard preserves the visible
-trajectory, 82,254 total tokens, and the returned US$0.004494 cost for review.
+The dashboard is the evaluator view of that same run. It used
+`z-ai/glm-5.3-flash` for both the tau2 agent and user simulator, made 17 model
+calls, matched all five expected actions, and finished with reward `1.0` and a
+database match. It records 82,254 total tokens and a returned US$0.004494 cost.
 
 ![Successful real OpenRouter result dashboard](docs/images/openrouter-result-dashboard.png)
 
@@ -67,6 +66,9 @@ Then open <http://127.0.0.1:4173>. The dashboard compares fixed and dynamic
 results, shows manual-review status, and reads the newest local tau2 result at
 request time. It displays visible conversation content, tool activity,
 evaluator checks, usage, and cost—not model reasoning.
+
+Open <http://127.0.0.1:4173/conversation.html> for a user-visible, read-only
+conversation rendered from that exact same latest-run payload.
 
 No paid model or API key is required for the controlled-agent tests.
 
