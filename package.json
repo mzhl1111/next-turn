@@ -8,15 +8,18 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "dev:chat": "node --import tsx scripts/serve_chat.ts",
     "run:weekend1": "node --import tsx scripts/run_weekend1.ts",
     "run:tau2:openrouter": "bash scripts/run_tau2_openrouter.sh",
     "setup:tau2": "bash scripts/setup_tau2.sh",
     "smoke:openrouter": "node --env-file-if-exists=.env --import tsx scripts/smoke_openrouter.ts",
     "test": "node --import tsx --test 'test/**/*.test.ts'",
+    "test:e2e": "playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "validate:tau2": "bash scripts/validate_tau2_task_1.sh"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0"

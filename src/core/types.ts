@@ -76,10 +76,11 @@ export type RunStopReason =
   | "simulator_cannot_continue"
   | "max_user_turns"
   | "simulator_error"
-  | "agent_error";
+  | "agent_error"
+  | "harness_error";
 
 export interface RunError {
-  readonly source: "simulator" | "agent";
+  readonly source: "simulator" | "agent" | "harness";
   readonly message: string;
 }
 

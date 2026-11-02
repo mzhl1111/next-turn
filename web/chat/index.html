@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Local browser harness for tau2 retail task 1" />
+    <title>Next Turn · Task 1 Chat</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="masthead">
+        <a class="wordmark" href="/">NEXT / TURN</a>
+        <div class="status"><span></span> local harness</div>
+      </header>
+
+      <section class="intro">
+        <p class="eyebrow">tau2 retail · task 1</p>
+        <h1>A visible conversation.<br /><em>An independent verdict.</em></h1>
+        <p class="lede">
+          This page exposes only what a user could see. Tool events and evaluator
+          answers stay outside the conversation and are collected after the run.
+        </p>
+      </section>
+
+      <section class="chat-card" data-chat-shell data-next-turn-id="turn-1">
+        <div class="chat-header">
+          <div>
+            <p class="label">Active test</p>
+            <h2 data-behavior-label>Starting session…</h2>
+          </div>
+          <span class="session-state" data-session-state>connecting</span>
+        </div>
+
+        <div class="messages" data-messages aria-live="polite">
+          <div class="empty-state" data-empty-state>
+            <span>01</span>
+            <p>Send the simulator’s first turn to begin.</p>
+          </div>
+        </div>
+
+        <form class="composer" data-composer>
+          <label for="message">Your message</label>
+          <div class="composer-row">
+            <textarea id="message" rows="2" required placeholder="Describe the exchange request…"></textarea>
+            <button type="submit">Send <span>↗</span></button>
+          </div>
+          <p class="turn-note">Completion is observed by turn ID, never by a fixed delay.</p>
+        </form>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

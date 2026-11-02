@@ -1,4 +1,7 @@
 export * from "./agents/controlled-retail-agent.js";
+export * from "./adapters/playwright-chat.js";
+export * from "./browser/chat-session.js";
+export * from "./browser/run.js";
 export * from "./core/run.js";
 export * from "./core/types.js";
 export * from "./evaluators/tau2-retail-task-1.js";
