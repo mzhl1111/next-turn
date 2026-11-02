@@ -20,11 +20,11 @@ by turn ID rather than a fixed delay.
 
 The result dashboard below shows a separate, real OpenRouter run using
 `z-ai/glm-5.3-flash` for both the tau2 agent and user simulator. This bounded
-trial made 13 model calls and timed out with reward `0`; the dashboard preserves
-the visible trajectory, 63,384 total tokens, and the returned US$0.004740 cost
-for review.
+trial made 17 model calls, matched all five expected actions, and finished with
+reward `1.0` and a database match. The dashboard preserves the visible
+trajectory, 82,254 total tokens, and the returned US$0.004494 cost for review.
 
-![Real OpenRouter timeout result dashboard](docs/images/openrouter-result-dashboard.png)
+![Successful real OpenRouter result dashboard](docs/images/openrouter-result-dashboard.png)
 
 ## Current scope
 
@@ -93,9 +93,10 @@ npm run run:tau2:openrouter
 ```
 
 This runs only retail task `"1"` with one trial, one concurrent worker, no
-automatic retries, a 24-step limit, and a 180-second timeout. The result summary
-uses OpenRouter's raw per-response cost because tau2's pinned LiteLLM price map
-does not yet recognize this model.
+automatic retries, a 24-step limit, and a configurable 360-second timeout. Set
+`TAU2_TIMEOUT_SECONDS` to use a different positive-integer bound. The result
+summary uses OpenRouter's raw per-response cost because tau2's pinned LiteLLM
+price map does not yet recognize this model.
 
 ### Pinned tau-bench environment
 
