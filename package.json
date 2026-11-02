@@ -7,6 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "archive:runs": "node --import tsx scripts/archive_runs.ts",
     "build": "tsc -p tsconfig.json",
     "dev": "node --import tsx scripts/serve_frontend.ts",
     "dev:chat": "node --import tsx scripts/serve_chat.ts",
@@ -24,11 +26,15 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.31.11",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0"
   },
   "dependencies": {
-    "@openrouter/sdk": "^1.5.33"
+    "@openrouter/sdk": "^1.5.33",
+    "better-sqlite3": "^13.0.3",
+    "drizzle-orm": "^0.45.4"
   }
 }

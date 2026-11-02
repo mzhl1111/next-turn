@@ -3,6 +3,7 @@ import type { AddressInfo } from "node:net";
 import path from "node:path";
 
 import { chromium } from "@playwright/test";
+import { SqliteRunStore } from "../src/storage/sqlite.js";
 
 import {
   FixedReplaySimulator,
@@ -125,6 +126,7 @@ async function main(): Promise<void> {
   const localServer = await listen();
   const browser = await chromium.launch({ headless: true });
   const runs: ExperimentRunSummary[] = [];
+  const archive = new SqliteRunStore(path.resolve(projectDir, process.env.NEXT_TURN_STORE_DIR ?? "artifacts/archive"));
   let accruedCostUsd = 0;
 
   try {
@@ -203,6 +205,14 @@ async function main(): Promise<void> {
           } finally {
             await context.tracing.stop({ path: tracePath });
             await context.close();
+            await archive.save({
+              source: "weekend3",
+              record: { caseId: id, summary: runs.find(item => item.id === id) ?? null },
+              artifacts: [
+                { name: "trace.zip", path: tracePath },
+                ...(runs.some(item => item.id === id) ? [{ name: "evidence.json", path: evidencePath }] : []),
+              ],
+            });
           }
           process.stdout.write(
             `[${runs.length}/${2 * weekend3Configurations.length * repetitions}] ${id}\n`,
@@ -211,6 +221,7 @@ async function main(): Promise<void> {
       }
     }
   } finally {
+    archive.close();
     await browser.close();
     await localServer.close();
   }

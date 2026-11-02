@@ -48,6 +48,26 @@ in [the run report](./docs/runs/2026-11-01-openrouter-glm-task-1.md).
 
 ## Development
 
+Run history can be persisted locally with SQLite and content-addressed artifact
+files. `npm run run:weekend3` automatically archives each completed browser
+attempt, including failed evaluations. `npm run archive:runs` imports existing
+Weekend 3 evidence and tau2 results, including unsuccessful runs. Repeated
+imports create additional entries; artifact contents are deduplicated.
+
+The default archive is `artifacts/archive/`; override `NEXT_TURN_STORE_DIR` to
+choose another location. Back up the entire directory, including SQLite WAL
+files while active, or close all writers before copying it. Trace files are
+copied into the archive, so rerunning an experiment cannot overwrite archived
+evidence. The `RunStore` interface supports future database implementations;
+`SqliteRunStore` provides save, get, list, and verified artifact reads.
+
+This adapter uses Drizzle ORM, generated SQL migrations, and the better-sqlite3
+driver. Generate schema changes with `npm run db:generate`; opening the store
+applies pending migrations. It archives supplied records and artifacts; it does
+not yet journal individual turns or automatically archive standalone tau2 runs.
+The dashboard still reads the existing files. Archives may contain conversation
+data and raw model responses; keep them local and review them before sharing.
+
 Use Node.js 22, then install and check the project:
 
 ```sh
