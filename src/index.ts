@@ -6,6 +6,7 @@ export * from "./core/run.js";
 export * from "./core/types.js";
 export * from "./evaluators/tau2-retail-task-1.js";
 export * from "./llm/openrouter.js";
+export * from "./reporters/failure-evidence.js";
 export * from "./scenarios/tau2-retail-task-1.js";
 export * from "./simulators/fixed-replay.js";
 export * from "./simulators/tau2-retail-task-1.js";

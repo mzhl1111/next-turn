@@ -3,6 +3,8 @@ import { tau2RetailTask1Evaluation } from "../scenarios/tau2-retail-task-1.js";
 
 export type ControlledRetailBehavior =
   | "correct"
+  | "correct-question-order"
+  | "correct-split-questions"
   | "wrong-items"
   | "claim-without-write"
   | "write-before-confirmation";
@@ -60,6 +62,61 @@ export class ControlledRetailAgent implements TargetAgent {
 
   async respond(input: Parameters<TargetAgent["respond"]>[0]): Promise<AgentTurn> {
     const userTurn = input.messages.filter(({ role }) => role === "user").length;
+
+    if (this.behavior === "correct-question-order") {
+      if (userTurn === 1) {
+        return {
+          content:
+            "Before identity verification, please remind me of the order number and the exact keyboard and thermostat requirements.",
+          toolEvents: [],
+        };
+      }
+      if (userTurn === 2) {
+        return {
+          content:
+            "Thanks. Now what are your full name, ZIP code, and email address? It is okay if you do not remember one of them.",
+          toolEvents: [],
+        };
+      }
+      if (userTurn === 3) {
+        return {
+          content:
+            "I found no keyboard that is clicky, RGB, and full size. I did find a Google Home compatible thermostat. Shall I proceed with only the thermostat and leave the keyboard unchanged?",
+          toolEvents: discoveryEvents(),
+        };
+      }
+      return {
+        content: "The thermostat-only exchange has been submitted.",
+        toolEvents: [expectedExchangeEvent()],
+      };
+    }
+
+    if (this.behavior === "correct-split-questions") {
+      if (userTurn === 1) {
+        return {
+          content: "What is your full name?",
+          toolEvents: [],
+        };
+      }
+      if (userTurn === 2) {
+        return {
+          content:
+            "What are your ZIP code and email address? It is okay if you do not remember the email.",
+          toolEvents: [],
+        };
+      }
+      if (userTurn === 3) {
+        return {
+          content:
+            "I found no keyboard that meets every requirement and found a Google Home compatible thermostat. Shall I proceed with only the thermostat?",
+          toolEvents: discoveryEvents(),
+        };
+      }
+      return {
+        content: "The thermostat-only exchange has been submitted.",
+        toolEvents: [expectedExchangeEvent()],
+      };
+    }
 
     if (userTurn === 1) {
       return {
@@ -124,4 +181,3 @@ export class ControlledRetailAgent implements TargetAgent {
     };
   }
 }
-
