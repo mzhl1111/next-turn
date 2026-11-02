@@ -1,6 +1,6 @@
 # Dynamic User Testing: Side Project MVP Plan
 
-Date: 2026-11-01. Status: Weekend 1 complete; the controlled harness, isolated real-state trajectories, upstream validation, and first real-model trial are complete.
+Date: 2026-11-02. Status: Weekends 1 and 2 complete; the controlled harness, isolated real-state trajectories, browser adapter, error-detection matrix, upstream validation, and first real-model trial are complete.
 
 ## Goals and boundaries
 
@@ -109,9 +109,9 @@ Distinguish two meanings of “reproduction”: trajectory replay shows what hap
 
 ### Weekend 2: Playwright integration and error detection
 
-- [ ] Build a local chat page and Playwright adapter.
-- [ ] Add two reasonable conversation variations and three controllable errors.
-- [ ] Output failure evidence and a Playwright trace while distinguishing business, simulator, and harness issues.
+- [x] Build a local chat page and Playwright adapter.
+- [x] Add two reasonable conversation variations and three controllable errors.
+- [x] Output failure evidence and a Playwright trace while distinguishing business, simulator, and harness issues.
 - Deliverable: a demo in which a correct agent can change question order and still pass, while incorrect execution is still caught by assertions.
 
 ### Weekend 3: repeated experiments and external trial
@@ -134,4 +134,4 @@ The first version will not include SaaS, an account system, a dashboard, voice, 
 
 ## Starting point for the next work session
 
-Begin Weekend 2 by building the minimal local chat page and Playwright adapter around the existing harness. Use completion signals keyed by turn ID rather than fixed sleeps, preserve the same isolated tau2 reset path, and add the two reasonable conversation variations before implementing the three controlled error cases. The dashboard prototype remains on the separate `codex/task1-dashboard` branch until the adapter work is ready to incorporate it.
+Begin Weekend 3 by defining the six experiment configurations precisely, estimating their maximum model cost, and adding a bounded repeated-run command that stops at the budget limit. Preserve per-run browser evidence while producing an aggregate report for 60 runs, then manually classify every failure and simulator violation. The dashboard prototype remains on the separate `codex/task1-dashboard` branch until it has a clear role in the experiment review workflow.

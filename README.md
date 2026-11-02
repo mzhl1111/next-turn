@@ -12,13 +12,16 @@ upstream pin and file hashes.
 
 ## Current scope
 
-Weekend 1 is complete:
+Weekends 1 and 2 are complete:
 
 - pin and verify the public upstream fixture;
 - model a scenario without exposing evaluator-only answers to the simulator;
 - run fixed-replay and dynamic simulators against a controlled agent;
 - execute both trajectories against isolated tau2 environments;
 - record messages, real tool results, assertions, state hashes, and stop reasons.
+- drive a local chat page through a turn-ID-based Playwright adapter;
+- accept reordered and split clarification paths while detecting three controlled
+  execution failures with trace-backed evidence.
 
 The pinned upstream Python environment passes a no-LLM validation of task `"1"`
 tool semantics, final state, and database evaluator reward under Python 3.13.
@@ -103,3 +106,35 @@ Inspectable local output is written to the ignored `artifacts/weekend1/`
 directory as `fixed.json`, `dynamic.json`, `trajectories.json`, and
 `summary.md`. These files contain visible messages and tool results but no
 model reasoning or API secrets.
+
+### Weekend 2 browser matrix
+
+Start the local task-1 chat page:
+
+```sh
+npm run dev:chat
+```
+
+Open <http://127.0.0.1:4174>. Select a controlled agent behavior by adding a
+`behavior` query parameter, such as `?behavior=correct-question-order`. The
+page displays only user-visible messages. Tool events remain available to the
+post-run reporter but are not rendered or provided to the simulator.
+
+Install Playwright's Chromium runtime once, then run the browser matrix:
+
+```sh
+npx playwright install chromium
+npm run test:e2e
+```
+
+The matrix covers the normal path, reordered questions, split questions, an
+unapproved keyboard exchange, a success claim without a write, and a write
+before confirmation. The adapter waits for a matching completed turn ID rather
+than using fixed sleeps. Local evidence, responsive screenshots, and one trace
+per case are written under the ignored `artifacts/weekend2/` directory.
+
+Open a trace with:
+
+```sh
+npx playwright show-trace artifacts/weekend2/traces/wrong-items.zip
+```
