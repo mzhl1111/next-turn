@@ -22,6 +22,12 @@ export const tau2RetailTask1UserScenario: UserScenario = {
   maxUserTurns: 12,
 };
 
+export const tau2RetailTask1FixedReplay = [
+  "I want the constrained keyboard exchange and a Google Home thermostat; if the keyboard is unavailable, exchange only the thermostat.",
+  "My name is Yusuf Rossi and my ZIP is 19122. I don't remember my email.",
+  "Yes, I confirm. Please exchange only the thermostat.",
+] as const;
+
 export interface RetailTask1EvaluationSpec {
   readonly expectedExchange: {
     readonly orderId: string;
@@ -40,4 +46,3 @@ export const tau2RetailTask1Evaluation: RetailTask1EvaluationSpec = {
     paymentMethodId: "credit_card_9513926",
   },
 };
-
