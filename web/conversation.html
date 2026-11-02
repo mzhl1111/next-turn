@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Read-only conversation view of the latest real-model tau2 task 1 run"
+    />
+    <title>Next Turn · Real-Model Conversation</title>
+    <link rel="stylesheet" href="/chat/styles.css" />
+    <link rel="stylesheet" href="/chat/replay.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="masthead">
+        <a class="wordmark" href="/">NEXT / TURN</a>
+        <div class="status"><span></span> <span data-run-status>loading real run</span></div>
+      </header>
+
+      <section class="intro replay-intro">
+        <p class="eyebrow" data-run-model>OpenRouter · loading model</p>
+        <h1>A real conversation.<br /><em>The same evidence.</em></h1>
+        <p class="lede">
+          This read-only view and the result dashboard load the same saved run.
+          Tool activity stays hidden here and remains available in the evaluator view.
+        </p>
+      </section>
+
+      <section class="chat-card" data-conversation-shell>
+        <div class="chat-header replay-header">
+          <div>
+            <p class="label">Latest real-model run</p>
+            <h2 data-run-goal>Loading task 1…</h2>
+          </div>
+          <span class="session-state" data-session-state>loading</span>
+        </div>
+
+        <div class="replay-metrics" data-run-metrics aria-label="Run metrics"></div>
+
+        <div class="messages replay-messages" data-messages aria-live="polite">
+          <div class="empty-state" data-empty-state>
+            <span>01</span>
+            <p>Loading the saved OpenRouter trajectory…</p>
+          </div>
+        </div>
+
+        <footer class="replay-footer">
+          <span>Visible user and assistant messages only</span>
+          <a href="/">Open evaluator dashboard ↗</a>
+        </footer>
+      </section>
+    </main>
+    <script type="module" src="/conversation.js"></script>
+  </body>
+</html>
