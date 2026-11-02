@@ -10,6 +10,10 @@ retail task `"1"` at release `v1.0.1`. See [PLAN.md](./PLAN.md) for the experime
 design and [docs/upstream-sources.md](./docs/upstream-sources.md) for the exact
 upstream pin and file hashes.
 
+See [PLAN2.md](./PLAN2.md) for the next phase: durable evidence storage, reusable
+application adapters, constrained LLM simulation, and independent integrations.
+The SQLite/Drizzle implementation is developed on `codex/sqlite-persistence`.
+
 ## Interface and evidence
 
 Both images below load the same saved OpenRouter run through `/api/run`. The
