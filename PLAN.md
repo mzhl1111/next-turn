@@ -1,6 +1,6 @@
 # Dynamic User Testing: Side Project MVP Plan
 
-Date: 2026-11-02. Status: Weekends 1 and 2 complete; the controlled harness, isolated real-state trajectories, browser adapter, error-detection matrix, upstream validation, and first real-model trial are complete.
+Date: 2026-11-02. Status: all three controlled implementation weekends are complete; the external developer trial remains pending and user-owned.
 
 ## Goals and boundaries
 
@@ -116,10 +116,11 @@ Distinguish two meanings of “reproduction”: trajectory replay shows what hap
 
 ### Weekend 3: repeated experiments and external trial
 
-- [ ] Run each of two input types five times under six configurations, for 60 small-sample experiments in total.
-- [ ] Report successes/total runs, false positives, false negatives, simulator violations, cost, and duration; do not interpret the small sample as proof of generalization.
-- [ ] Manually review every failure and simulator-violation record.
-- [ ] Write an integration example and invite 2–3 developers to try the public demo; the project author decides whether and how to send invitations.
+- [x] Run each of two input types five times under six configurations, for 60 small-sample experiments in total.
+- [x] Report successes/total runs, false positives, false negatives, simulator violations, cost, and duration; do not interpret the small sample as proof of generalization.
+- [x] Manually review every failure and simulator-violation record.
+- [x] Write an integration example.
+- [ ] Invite 2–3 developers to try the public demo; the project author decides whether and how to send invitations.
 - Deliverable: a short experiment report and a decision on whether to continue investing in the project.
 
 ## Budget and continuation criteria
@@ -130,8 +131,8 @@ MVP engineering acceptance: the controllable correct substitute passes both reas
 
 Signals for further investment: dynamic input reduces false positives caused by path variation compared with fixed replay without hiding business errors; at least two external trial users can integrate it and find the diagnostic output useful. If the simulator frequently departs from its rules or most of the work involves explaining false positives, improve constraints and observability first.
 
-The first version will not include SaaS, an account system, a dashboard, voice, multiple benchmark domains, modeling of real human behavior, or training. The first task can demonstrate only an engineering loop; demonstrating generality requires additional independent scenarios later.
+The first version will not include SaaS, an account system, a hosted dashboard, voice, multiple benchmark domains, modeling of real human behavior, or training. Its local dashboard is only an experiment-review surface. The first task can demonstrate only an engineering loop; demonstrating generality requires additional independent scenarios later.
 
 ## Starting point for the next work session
 
-Begin Weekend 3 by defining the six experiment configurations precisely, estimating their maximum model cost, and adding a bounded repeated-run command that stops at the budget limit. Preserve per-run browser evidence while producing an aggregate report for 60 runs, then manually classify every failure and simulator violation. The dashboard prototype remains on the separate `codex/task1-dashboard` branch until it has a clear role in the experiment review workflow.
+The next step is the external trial. Choose 2–3 developers, decide whether to share the repository or a packaged local demo, and ask them to follow the integration example without project-author assistance. Record setup time, failed steps, diagnostic usefulness, and whether the tool changes their testing decisions. Do not send invitations or expose the local dashboard until the project author chooses the recipients and sharing method.

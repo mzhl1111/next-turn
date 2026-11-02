@@ -12,7 +12,8 @@ upstream pin and file hashes.
 
 ## Current scope
 
-Weekends 1 and 2 are complete:
+The three controlled implementation weekends are complete; the external trial
+remains user-owned:
 
 - pin and verify the public upstream fixture;
 - model a scenario without exposing evaluator-only answers to the simulator;
@@ -22,6 +23,8 @@ Weekends 1 and 2 are complete:
 - drive a local chat page through a turn-ID-based Playwright adapter;
 - accept reordered and split clarification paths while detecting three controlled
   execution failures with trace-backed evidence.
+- compare fixed and dynamic input across 60 browser runs and manually review
+  every non-passing record.
 
 The pinned upstream Python environment passes a no-LLM validation of task `"1"`
 tool semantics, final state, and database evaluator reward under Python 3.13.
@@ -38,15 +41,16 @@ npm test
 npm run typecheck
 ```
 
-View the latest local task-1 run in the dashboard:
+View the Weekend 3 aggregate and latest real-model task-1 run in the dashboard:
 
 ```sh
 npm run dev
 ```
 
-Then open <http://127.0.0.1:4173>. The dashboard reads the newest local tau2
-result at request time and displays only visible conversation content, tool
-activity, evaluator checks, usage, and cost—not model reasoning.
+Then open <http://127.0.0.1:4173>. The dashboard compares fixed and dynamic
+results, shows manual-review status, and reads the newest local tau2 result at
+request time. It displays visible conversation content, tool activity,
+evaluator checks, usage, and cost—not model reasoning.
 
 No paid model or API key is required for the controlled-agent tests.
 
@@ -147,4 +151,31 @@ Open a trace with:
 
 ```sh
 npx playwright show-trace artifacts/weekend2/traces/wrong-items.zip
+```
+
+### Weekend 3 controlled experiment
+
+Run the bounded 60-run matrix and record the completed manual review:
+
+```sh
+npm run run:weekend3
+npm run review:weekend3
+```
+
+The runner executes fixed and dynamic input five times under six controlled
+agent behaviors. Every run receives an evidence JSON file and Playwright trace
+under the ignored `artifacts/weekend3/` directory. It enforces a maximum of
+five repetitions and a default US$20 cost ceiling. This controlled matrix makes
+no model calls, so the measured cost is zero.
+
+The result is a derived harness experiment, not an official tau2 leaderboard
+submission or evidence of model generalization. The current run produced 10
+fixed-replay false negatives on reordered and split questions; dynamic input
+passed every correct path and detected every injected error.
+
+For a minimal integration example, start `npm run dev:chat` in one terminal and
+run this in another:
+
+```sh
+npm run example:playwright
 ```
