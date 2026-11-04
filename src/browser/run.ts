@@ -14,7 +14,14 @@ export interface BrowserRunOptions {
   readonly simulator: UserSimulator;
   readonly adapter: PlaywrightChatAdapter;
   readonly agentName: string;
+  readonly onEvent?: (event: BrowserRunEvent) => Promise<void>;
 }
+
+export type BrowserRunEvent =
+  | { readonly type: "browser.ready" }
+  | { readonly type: "simulator.decision"; readonly data: RecordedSimulatorDecision }
+  | { readonly type: "conversation.checkpoint"; readonly data: readonly VisibleMessage[] }
+  | { readonly type: "run.error"; readonly data: RunError };
 
 export interface BrowserRunResult {
   readonly run: RunRecord;
@@ -28,7 +35,7 @@ function errorMessage(error: unknown): string {
 export async function runBrowserConversation(
   options: BrowserRunOptions,
 ): Promise<BrowserRunResult> {
-  const { scenario, simulator, adapter, agentName } = options;
+  const { scenario, simulator, adapter, agentName, onEvent } = options;
   const simulatorDecisions: RecordedSimulatorDecision[] = [];
   const turnIds: string[] = [];
   let messages: readonly VisibleMessage[] = [];
@@ -37,6 +44,7 @@ export async function runBrowserConversation(
 
   try {
     await adapter.ready();
+    await onEvent?.({ type: "browser.ready" });
   } catch (cause) {
     stopReason = "harness_error";
     error = { source: "harness", message: errorMessage(cause) };
@@ -53,6 +61,16 @@ export async function runBrowserConversation(
         break;
       }
       simulatorDecisions.push({ userTurn, decision });
+      try {
+        await onEvent?.({
+          type: "simulator.decision",
+          data: { userTurn, decision },
+        });
+      } catch (cause) {
+        stopReason = "harness_error";
+        error = { source: "harness", message: `run event persistence failed: ${errorMessage(cause)}` };
+        break;
+      }
       if (decision.kind === "stop") {
         stopReason =
           decision.reason === "completed"
@@ -65,6 +83,7 @@ export async function runBrowserConversation(
         const turn = await adapter.sendMessage(decision.content);
         turnIds.push(turn.turnId);
         messages = await adapter.visibleMessages();
+        await onEvent?.({ type: "conversation.checkpoint", data: messages });
       } catch (cause) {
         stopReason = "harness_error";
         error = { source: "harness", message: errorMessage(cause) };
@@ -97,6 +116,13 @@ export async function runBrowserConversation(
     toolEvents,
     stopReason,
   } satisfies Omit<RunRecord, "error">;
+  if (error) {
+    try {
+      await onEvent?.({ type: "run.error", data: error });
+    } catch {
+      // Preserve the original run error when persistence also fails.
+    }
+  }
   return {
     run: error ? { ...base, error } : base,
     turnIds,

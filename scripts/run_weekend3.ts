@@ -1,8 +1,9 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import path from "node:path";
 
-import { chromium } from "@playwright/test";
+import { chromium, type Browser, type BrowserContext } from "@playwright/test";
 import { SqliteRunStore } from "../src/storage/sqlite.js";
 
 import {
@@ -123,13 +124,37 @@ async function main(): Promise<void> {
     mkdir(traceDir, { recursive: true }),
   ]);
 
-  const localServer = await listen();
-  const browser = await chromium.launch({ headless: true });
   const runs: ExperimentRunSummary[] = [];
-  const archive = new SqliteRunStore(path.resolve(projectDir, process.env.NEXT_TURN_STORE_DIR ?? "artifacts/archive"));
+  const archive = new SqliteRunStore(
+    path.resolve(projectDir, process.env.NEXT_TURN_STORE_DIR ?? "artifacts/archive"),
+  );
+  await archive.interruptRunning("browser experiment process restarted");
+  let localServer: Awaited<ReturnType<typeof listen>> | undefined;
+  let browser: Browser | undefined;
   let accruedCostUsd = 0;
 
   try {
+    try {
+      localServer = await listen();
+      browser = await chromium.launch({ headless: true });
+    } catch (cause) {
+      const setup = await archive.begin({
+        source: "weekend3-setup",
+        experimentId: "weekend3-controlled-matrix",
+        scenario: { id: "tau2:retail:1", version: "v1.0.1" },
+        adapter: { name: "playwright-chat", version: "1" },
+        simulator: { name: "not-started" },
+      });
+      await archive.appendEvent(setup.id, "run.error", {
+        message: cause instanceof Error ? cause.message : String(cause),
+      });
+      await archive.finalize(setup.id, {
+        status: "failed",
+        outcome: "infrastructure_error",
+        terminationReason: "browser setup failed",
+      });
+      throw cause;
+    }
     for (const inputType of ["fixed", "dynamic"] satisfies ExperimentInputType[]) {
       for (const configuration of weekend3Configurations) {
         for (let repetition = 1; repetition <= repetitions; repetition += 1) {
@@ -137,31 +162,65 @@ async function main(): Promise<void> {
           const id = `${inputType}-${configuration.id}-${repetition}`;
           const tracePath = path.join(traceDir, `${id}.zip`);
           const evidencePath = path.join(evidenceDir, `${id}.json`);
-          const context = await browser.newContext({ baseURL: localServer.baseUrl });
-          await context.tracing.start({
-            screenshots: true,
-            snapshots: true,
-            sources: true,
+          const archived = await archive.begin({
+            source: "weekend3",
+            experimentId: "weekend3-controlled-matrix",
+            scenario: { id: tau2RetailTask1UserScenario.id, version: tau2RetailTask1UserScenario.version },
+            adapter: { name: "playwright-chat", version: "1" },
+            simulator: { name: simulatorFor(inputType).name },
+            metadata: {
+              caseId: id,
+              inputType,
+              configurationId: configuration.id,
+              repetition,
+              expectedPass: configuration.expectedPass,
+            },
           });
+          await archive.appendEvent(archived.id, "run.started", { caseId: id });
           const started = performance.now();
-          let evidence: FailureEvidence;
+          let context: BrowserContext | undefined;
+          let tracingStarted = false;
+          let evidence: FailureEvidence | undefined;
+          let runSummary: ExperimentRunSummary | undefined;
+          let runRecord: Awaited<ReturnType<typeof runBrowserConversation>>["run"] | undefined;
+          let turnIds: readonly string[] = [];
+          let caseFailure: unknown;
           try {
+            context = await browser.newContext({ baseURL: localServer.baseUrl });
+            await context.tracing.start({
+              screenshots: true,
+              snapshots: true,
+              sources: true,
+            });
+            tracingStarted = true;
             const page = await context.newPage();
             await page.goto(`/?behavior=${configuration.behavior}`);
             const adapter = new PlaywrightChatAdapter(page, context.request);
-            const { run, turnIds } = await runBrowserConversation({
+            const result = await runBrowserConversation({
               scenario: tau2RetailTask1UserScenario,
               simulator: simulatorFor(inputType),
               adapter,
               agentName: `controlled-retail:${configuration.behavior}`,
+              onEvent: async (event) => {
+                await archive.appendEvent(
+                  archived.id,
+                  event.type,
+                  "data" in event ? event.data : {},
+                );
+                if (event.type === "conversation.checkpoint") {
+                  await archive.checkpoint(archived.id, { messages: event.data });
+                }
+              },
             });
+            runRecord = result.run;
+            turnIds = result.turnIds;
             const evaluation = evaluateTau2RetailTask1(
-              run,
+              runRecord,
               tau2RetailTask1Evaluation,
             );
             evidence = buildFailureEvidence({
               caseId: id,
-              run,
+              run: runRecord,
               evaluation,
               tracePath: path.relative(projectDir, tracePath),
             });
@@ -169,7 +228,7 @@ async function main(): Promise<void> {
             const costUsd = 0;
             accruedCostUsd += costUsd;
             invariant(accruedCostUsd <= budgetUsd, "experiment budget exceeded");
-            const runSummary: ExperimentRunSummary = {
+            runSummary = {
               id,
               inputType,
               configurationId: configuration.id,
@@ -188,7 +247,6 @@ async function main(): Promise<void> {
               evidencePath: path.relative(projectDir, evidencePath),
               tracePath: path.relative(projectDir, tracePath),
             };
-            runs.push(runSummary);
             await writeFile(
               evidencePath,
               `${JSON.stringify(
@@ -202,18 +260,67 @@ async function main(): Promise<void> {
                 2,
               )}\n`,
             );
-          } finally {
-            await context.tracing.stop({ path: tracePath });
-            await context.close();
-            await archive.save({
-              source: "weekend3",
-              record: { caseId: id, summary: runs.find(item => item.id === id) ?? null },
-              artifacts: [
-                { name: "trace.zip", path: tracePath },
-                ...(runs.some(item => item.id === id) ? [{ name: "evidence.json", path: evidencePath }] : []),
-              ],
-            });
+          } catch (cause) {
+            caseFailure = cause;
           }
+          if (context) {
+            if (tracingStarted) {
+              try {
+                await context.tracing.stop({ path: tracePath });
+              } catch (cause) {
+                caseFailure ??= cause;
+              }
+            }
+            try {
+              await context.close();
+            } catch (cause) {
+              caseFailure ??= cause;
+            }
+          }
+          try {
+            if (existsSync(tracePath)) {
+              await archive.addArtifact(archived.id, {
+                name: "trace.zip",
+                path: tracePath,
+                mediaType: "application/zip",
+              });
+            }
+            if (existsSync(evidencePath)) {
+              await archive.addArtifact(archived.id, {
+                name: "evidence.json",
+                path: evidencePath,
+                mediaType: "application/json",
+                redactJson: true,
+              });
+            }
+          } catch (cause) {
+            caseFailure ??= cause;
+          }
+          if (caseFailure) {
+            await archive.appendEvent(archived.id, "run.error", {
+              message: caseFailure instanceof Error ? caseFailure.message : String(caseFailure),
+            });
+            await archive.finalize(archived.id, {
+              status: "failed",
+              outcome: "infrastructure_error",
+              terminationReason: "browser run failed",
+              record: { caseId: id, run: runRecord, turnIds },
+            });
+            throw caseFailure;
+          }
+          invariant(evidence && runSummary && runRecord, `missing result for ${id}`);
+          runs.push(runSummary);
+          await archive.checkpoint(archived.id, { caseId: id, run: runRecord, turnIds, evidence, runSummary });
+          await archive.finalize(archived.id, {
+            status: runRecord.error ? "failed" : "completed",
+            outcome: runRecord.error
+              ? "infrastructure_error"
+              : evidence.passed ? "pass" : "fail",
+            terminationReason: runRecord.stopReason,
+            usage: { promptTokens: 0, completionTokens: 0, costUsd: 0 },
+            evaluation: evidence.assertions,
+            record: { caseId: id, run: runRecord, turnIds, evidence, runSummary },
+          });
           process.stdout.write(
             `[${runs.length}/${2 * weekend3Configurations.length * repetitions}] ${id}\n`,
           );
@@ -222,8 +329,8 @@ async function main(): Promise<void> {
     }
   } finally {
     archive.close();
-    await browser.close();
-    await localServer.close();
+    await browser?.close();
+    await localServer?.close();
   }
 
   const generatedAt = new Date().toISOString();

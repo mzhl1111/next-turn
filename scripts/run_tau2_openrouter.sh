@@ -43,6 +43,14 @@ readonly TAU2_DATA_DIR="${PROJECT_DIR}/.tau2/tau2-bench/data"
 readonly SAVE_NAME="${TAU2_SAVE_TO:-next-turn-glm-task-1-$(date -u +%Y%m%dT%H%M%SZ)}"
 readonly RESULT_FILE="${TAU2_DATA_DIR}/simulations/${SAVE_NAME}/results.json"
 
+archive_result() {
+  if [[ -f "${RESULT_FILE}" ]]; then
+    node --import tsx "${SCRIPT_DIR}/archive_runs.ts" || \
+      echo "Warning: the tau2 result exists but could not be archived." >&2
+  fi
+}
+trap archive_result EXIT
+
 if [[ ! -x "${PROJECT_DIR}/.venv/bin/tau2" || ! -d "${TAU2_DATA_DIR}" ]]; then
   echo "Run 'npm run setup:tau2' first." >&2
   exit 1
