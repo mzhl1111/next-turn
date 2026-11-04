@@ -53,24 +53,60 @@ in [the run report](./docs/runs/2026-11-01-openrouter-glm-task-1.md).
 ## Development
 
 Run history can be persisted locally with SQLite and content-addressed artifact
-files. `npm run run:weekend3` automatically archives each completed browser
-attempt, including failed evaluations. `npm run archive:runs` imports existing
-Weekend 3 evidence and tau2 results, including unsuccessful runs. Repeated
-imports create additional entries; artifact contents are deduplicated.
+files. `npm run run:weekend3` creates a run before browser setup, checkpoints
+visible conversation turns, and preserves setup, transport, evaluation, and
+trace evidence even when an attempt fails. `npm run run:tau2:openrouter`
+imports its result on process exit. `npm run archive:runs` idempotently imports
+existing Weekend 3 and tau2 results; a different source attempt remains a
+different run, while rescanning the same result does not duplicate it.
 
 The default archive is `artifacts/archive/`; override `NEXT_TURN_STORE_DIR` to
-choose another location. Back up the entire directory, including SQLite WAL
-files while active, or close all writers before copying it. Trace files are
-copied into the archive, so rerunning an experiment cannot overwrite archived
-evidence. The `RunStore` interface supports future database implementations;
-`SqliteRunStore` provides save, get, list, and verified artifact reads.
+choose another location. Every run has a stable ID and one of `running`,
+`completed`, `failed`, `cancelled`, or `interrupted` states. Restarting the
+Weekend 3 runner marks abandoned active runs as interrupted; interrupted runs
+cannot be finalized as passing. Artifact copies are published atomically,
+deduplicated by SHA-256, and verified whenever they are read or backed up.
+
+Use the archive management command for safe snapshots and explicit lifecycle
+operations:
+
+```sh
+npm run archive:manage -- list
+npm run archive:manage -- backup /path/to/new-backup-directory
+npm run archive:manage -- export RUN_ID /path/to/new-export-directory
+npm run archive:manage -- delete RUN_ID
+npm run archive:manage -- prune
+```
+
+Exports include only artifacts marked shareable unless `--include-private` is
+provided. Deletion removes the selected run and then removes blobs that no run
+references. Retention is intentionally explicit in Milestone 1: there is no
+automatic age-based deletion. `prune` only removes unreferenced blobs and
+abandoned temporary files. A backup uses
+SQLite's online backup API and copies every referenced artifact with checksum
+verification, so it can be opened directly as another archive.
 
 This adapter uses Drizzle ORM, generated SQL migrations, and the better-sqlite3
 driver. Generate schema changes with `npm run db:generate`; opening the store
-applies pending migrations. It archives supplied records and artifacts; it does
-not yet journal individual turns or automatically archive standalone tau2 runs.
-The dashboard still reads the existing files. Archives may contain conversation
-data and raw model responses; keep them local and review them before sharing.
+applies pending migrations. Database-independent contracts live separately from
+the SQLite adapter so another database can implement the same lifecycle. JSON
+metadata, events, checkpoints, and opted-in JSON artifacts pass through
+configurable redaction before persistence. Browser traces and other opaque
+artifacts are private by default because their contents cannot be safely
+redacted without understanding their format.
+
+The dashboard and conversation page load the same explicit `?run=RUN_ID` and
+keep that ID in their links. The selector includes successful and failed tau2
+runs; without an ID, it selects the newest archived tau2 run and falls back to
+the newest result file only when no archive exists.
+
+The production dependency audit reports zero vulnerabilities. The full audit
+reports four moderate development-only advisories through
+`drizzle-kit -> @esbuild-kit -> esbuild`. npm's proposed remediation downgrades
+drizzle-kit to `0.18.1`, a breaking change, so this release documents the risk
+instead of applying that forced downgrade. The affected development server must
+not be exposed to untrusted networks; revisit the advisory when Drizzle removes
+the dependency path.
 
 Use Node.js 22, then install and check the project:
 
@@ -87,12 +123,12 @@ npm run dev
 ```
 
 Then open <http://127.0.0.1:4173>. The dashboard compares fixed and dynamic
-results, shows manual-review status, and reads the newest local tau2 result at
-request time. It displays visible conversation content, tool activity,
-evaluator checks, usage, and cost—not model reasoning.
+results, shows manual-review status, and lets you select an archived tau2 run.
+It displays visible conversation content, tool activity, evaluator checks,
+usage, and cost—not model reasoning.
 
 Open <http://127.0.0.1:4173/conversation.html> for a user-visible, read-only
-conversation rendered from that exact same latest-run payload.
+conversation rendered from that exact same selected-run payload.
 
 No paid model or API key is required for the controlled-agent tests.
 

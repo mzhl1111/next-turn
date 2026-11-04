@@ -2,8 +2,8 @@
 
 Date: 2026-11-02
 
-Status: proposed implementation sequence. The first SQLite persistence draft is
-available on `codex/sqlite-persistence`; it is not part of the main release.
+Status: active implementation sequence. Milestone 1 is complete on
+`codex/sqlite-persistence`; it is not yet part of the main release.
 This plan follows [PLAN.md](./PLAN.md), which records the original MVP experiment.
 
 ## Objective
@@ -57,41 +57,49 @@ framework, browser trace viewer, or general model SDK.
 
 Implementation branch: `codex/sqlite-persistence`.
 
-The draft already includes Drizzle schema/migrations, a SQLite RunStore, immutable
-artifact copies addressed by hash, a saved-result importer, and automatic
-archival for completed Weekend 3 browser attempts. Initial checks passed 21 tests
-and a 12-case browser matrix. Locally, 76 records and 148 artifact references were
-verified. These counts are local evidence, not repository-shipped data.
+The completed implementation includes Drizzle schema/migrations, a SQLite
+RunStore, lifecycle events and checkpoints, immutable artifacts addressed by
+hash, idempotent import, backup/export/deletion commands, redaction, and stable
+run-ID retrieval in both views. The verification suite passes 27 tests and a
+fresh 12-case browser matrix; all 24 artifacts from that matrix were read back
+with verified checksums. These counts are development evidence, not a reliability
+claim about an LLM.
 
-Remaining work:
-
-- [ ] Separate database-independent storage contracts from SQLite implementation.
-- [ ] Define a versioned run envelope: run ID, experiment ID, scenario/version,
+- [x] Separate database-independent storage contracts from SQLite implementation.
+- [x] Define a versioned run envelope: run ID, experiment ID, scenario/version,
   adapter, simulator/model configuration, prompt hash, timestamps, outcome,
   termination reason, usage, and evaluation results.
-- [ ] Persist lifecycle events and partial conversations incrementally so a crash
+- [x] Persist lifecycle events and partial conversations incrementally so a crash
   does not erase everything before finalization. Distinguish running, completed,
   failed, cancelled, and interrupted runs.
-- [ ] Automatically archive real tau2 runs and browser setup/transport failures.
-- [ ] Make imports idempotent using source identity or content hashes, while
+- [x] Automatically archive real tau2 runs and browser setup/transport failures.
+- [x] Make imports idempotent using source identity or content hashes, while
   preserving genuinely separate attempts as separate runs.
-- [ ] Publish artifact files atomically; test interrupted writes, checksum
+- [x] Publish artifact files atomically; test interrupted writes, checksum
   corruption, missing files, duplicate artifacts, and concurrent writers.
-- [ ] Define consistent backup/export, retention, and explicit deletion behavior.
+- [x] Define consistent backup/export, retention, and explicit deletion behavior.
   Handle orphan artifacts without deleting evidence still referenced by a run.
-- [ ] Apply configurable redaction before durable recording and export. Do not
+- [x] Apply configurable redaction before durable recording and export. Do not
   persist API keys or authorization headers. Distinguish visible messages from
   raw provider responses that may contain additional sensitive content.
-- [ ] Resolve or document development dependency advisories. The initial
-  production dependency audit was clean; drizzle-kit brought moderate esbuild
-  advisories through development dependencies.
-- [ ] Add retrieval by run ID and migrate dashboard/conversation views to the
+- [x] Resolve or document development dependency advisories. The production
+  dependency audit is clean. Four moderate development-only advisories remain
+  through `drizzle-kit -> @esbuild-kit -> esbuild`; npm's offered fix is a
+  breaking drizzle-kit downgrade, so the README records the scope and mitigation.
+- [x] Add retrieval by run ID and migrate dashboard/conversation views to the
   same selected run. Support browsing successes and failures.
 
 Acceptance: repeated executions never overwrite earlier attempts; after reopening
 the store, each completed run has readable, verified artifacts; interrupted runs
 retain partial evidence and cannot appear as passed. Conversation and evaluator
 views share a stable run ID. Backups restore both metadata and artifacts.
+
+Acceptance evidence: idempotent imports return the original run while distinct
+attempt identities create new runs; restore tests open a backup and verify its
+artifact; corruption and missing-file tests fail closed; multi-writer tests share
+one content-addressed blob safely; and both dashboard views preserve the selected
+archive ID. Milestone 2 can now depend on the database-independent `RunStore`
+contract.
 
 ## Milestone 2: application integration contracts
 
