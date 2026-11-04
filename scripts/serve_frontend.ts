@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { extname, join, resolve } from "node:path";
 
 import { tau2RetailTask1UserScenario } from "../src/scenarios/tau2-retail-task-1.js";
+import { SqliteRunStore } from "../src/storage/sqlite.js";
 
 const projectDir = resolve(import.meta.dirname, "..");
 const webDir = join(projectDir, "web");
@@ -20,6 +21,10 @@ const weekend3Review = join(
   "artifacts",
   "weekend3",
   "review-summary.json",
+);
+const archiveDir = resolve(
+  projectDir,
+  process.env.NEXT_TURN_STORE_DIR ?? "artifacts/archive",
 );
 const port = Number(process.env.PORT ?? 4173);
 
@@ -75,7 +80,7 @@ function toolResultSummary(content: string): string {
   return content.length > 96 ? `${content.slice(0, 93)}...` : content;
 }
 
-function presentResults(payload: JsonObject, source: string): JsonObject {
+function presentResults(payload: JsonObject, source: string, archiveId?: string): JsonObject {
   const simulation = asObject(asArray(payload.simulations)[0]);
   const info = asObject(payload.info);
   const rewardInfo = asObject(simulation.reward_info);
@@ -124,6 +129,7 @@ function presentResults(payload: JsonObject, source: string): JsonObject {
 
   return {
     source,
+    archiveId,
     scenario: tau2RetailTask1UserScenario,
     run: {
       taskId: simulation.task_id,
@@ -178,7 +184,51 @@ const server = createServer(async (request, response) => {
       response.end(JSON.stringify({ results, review }));
       return;
     }
+    if (url.pathname === "/api/runs") {
+      if (!existsSync(join(archiveDir, "runs.sqlite"))) {
+        response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+        response.end(JSON.stringify({ runs: [] }));
+        return;
+      }
+      const store = new SqliteRunStore(archiveDir);
+      try {
+        const requestedLimit = Number(url.searchParams.get("limit") ?? "100");
+        if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 1_000) {
+          throw new Error("Run limit must be an integer from 1 to 1000");
+        }
+        const runs = (await store.list({ limit: 10_000 }))
+          .filter(({ source }) => source === "tau2" || source === "tau2-import")
+          .slice(0, requestedLimit);
+        response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+        response.end(JSON.stringify({ runs }));
+      } finally {
+        store.close();
+      }
+      return;
+    }
     if (url.pathname === "/api/run") {
+      const requestedId = url.searchParams.get("id");
+      if (existsSync(join(archiveDir, "runs.sqlite"))) {
+        const store = new SqliteRunStore(archiveDir);
+        try {
+          const id = requestedId ?? (await store.list({ limit: 1_000 }))
+            .find(({ source }) => source === "tau2" || source === "tau2-import")?.id;
+          if (id) {
+            const stored = await store.get(id);
+            if (!stored) throw new Error(`Archived run not found: ${id}`);
+            if (stored.run.source !== "tau2" && stored.run.source !== "tau2-import") {
+              throw new Error(`Archived run ${id} is not a tau2 result`);
+            }
+            const payload = asObject(stored.run.record);
+            response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+            response.end(JSON.stringify(presentResults(payload, `archive:${id}`, id)));
+            return;
+          }
+        } finally {
+          store.close();
+        }
+      }
+      if (requestedId) throw new Error(`Archived run not found: ${requestedId}`);
       const source = await findLatestResults();
       const payload = asObject(JSON.parse(await readFile(source, "utf8")));
       response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });

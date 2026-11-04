@@ -27,7 +27,8 @@ function metricElement(label, value) {
 }
 
 async function loadRun() {
-  const response = await fetch("/api/run");
+  const requestedRun = new URLSearchParams(location.search).get("run");
+  const response = await fetch(`/api/run${requestedRun ? `?id=${encodeURIComponent(requestedRun)}` : ""}`);
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? "Unable to load the latest run");
 
@@ -54,6 +55,13 @@ async function loadRun() {
     metricElement("Actual cost", `$${Number(data.run.totals.cost).toFixed(6)}`),
   );
   messages.replaceChildren(...visibleMessages.map(messageElement));
+  if (data.archiveId) {
+    const url = new URL(location.href);
+    url.searchParams.set("run", data.archiveId);
+    history.replaceState(null, "", url);
+    const dashboard = document.querySelector(".replay-footer a");
+    dashboard.href = `/?run=${encodeURIComponent(data.archiveId)}`;
+  }
 }
 
 loadRun().catch((error) => {

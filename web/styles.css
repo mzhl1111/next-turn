@@ -76,6 +76,8 @@ h1 em { color: var(--muted); font-style: normal; }
 .review-item span { color: var(--muted); font-size: 11px; }
 .review-item strong { color: var(--acid); font: 500 13px "DM Mono", monospace; }
 .section-divider { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--muted); font: 10px "DM Mono", monospace; letter-spacing: .13em; text-transform: uppercase; }
+.run-picker { display: flex; align-items: center; gap: 10px; }
+.run-picker select { max-width: 310px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 5px; background: var(--panel-strong); color: var(--text); font: 10px "DM Mono", monospace; }
 .model-run-heading { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: end; padding: 66px 0 48px; }
 .model-run-heading h2 { max-width: 900px; margin: 0; font-size: clamp(42px, 5vw, 72px); line-height: 1; letter-spacing: -.055em; font-weight: 500; }
 .model-run-heading h2 em { color: var(--muted); font-style: normal; }

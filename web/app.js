@@ -158,7 +158,8 @@ async function loadExperiment() {
 }
 
 async function loadRun() {
-  const data = await fetchJson("/api/run");
+  const requestedRun = new URLSearchParams(location.search).get("run");
+  const data = await fetchJson(`/api/run${requestedRun ? `?id=${encodeURIComponent(requestedRun)}` : ""}`);
 
   $("#goal").textContent = data.scenario.goal;
   $("#reward").textContent = Number(data.run.reward ?? 0).toFixed(1);
@@ -202,6 +203,35 @@ async function loadRun() {
     }),
   );
   $("#timeline").replaceChildren(...data.messages.map(renderMessage));
+  if (data.archiveId) {
+    const url = new URL(location.href);
+    url.searchParams.set("run", data.archiveId);
+    history.replaceState(null, "", url);
+  }
+}
+
+async function loadRunSelector() {
+  const { runs } = await fetchJson("/api/runs?limit=1000");
+  const selector = $("#run-selector");
+  if (runs.length === 0) {
+    selector.closest(".run-picker").hidden = true;
+    return;
+  }
+  const selected = new URLSearchParams(location.search).get("run") ?? runs[0].id;
+  selector.replaceChildren(
+    ...runs.map((run) => {
+      const option = document.createElement("option");
+      option.value = run.id;
+      option.textContent = `${run.outcome ?? run.status} · ${new Date(run.createdAt).toLocaleString()}`;
+      option.selected = run.id === selected;
+      return option;
+    }),
+  );
+  selector.addEventListener("change", () => {
+    const url = new URL(location.href);
+    url.searchParams.set("run", selector.value);
+    location.assign(url);
+  });
 }
 
 $("#filters").addEventListener("click", (event) => {
@@ -218,6 +248,10 @@ $("#filters").addEventListener("click", (event) => {
 loadExperiment().catch((error) => {
   $("#experiment-summary").textContent = `Could not load Weekend 3: ${error.message}`;
   $("#experiment-status").lastChild.textContent = " Load failed";
+});
+
+loadRunSelector().catch(() => {
+  $("#run-selector").closest(".run-picker").hidden = true;
 });
 
 loadRun().catch((error) => {
