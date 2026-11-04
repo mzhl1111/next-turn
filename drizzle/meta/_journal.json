@@ -8,6 +8,13 @@
       "when": 1793640489464,
       "tag": "0000_run_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1793758235243,
+      "tag": "0001_run_lifecycle",
+      "breakpoints": true
     }
   ]
 }

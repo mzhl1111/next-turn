@@ -12,4 +12,7 @@ export * from "./reporters/failure-evidence.js";
 export * from "./scenarios/tau2-retail-task-1.js";
 export * from "./simulators/fixed-replay.js";
 export * from "./simulators/tau2-retail-task-1.js";
+export * from "./storage/redaction.js";
+export * from "./storage/sqlite.js";
+export * from "./storage/types.js";
 export * from "./upstream.js";
